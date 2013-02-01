@@ -15,3 +15,7 @@
 *.exe
 *.out
 *.app
+lab2sh
+
+# Random junk files
+*~

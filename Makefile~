@@ -1,0 +1,27 @@
+# Thomas Foulds
+# tcf9bj
+# 02/01/13
+# CS4414
+# Makefile for Assignment 2
+
+CFLAGS=-Wall
+CC=gcc $(CFLAGS)
+OFILES=shell.o
+
+default: $(OFILES)
+	$(CC) -g -o lab2 $(OFILES)
+
+test: clean default clearscr valgrind
+
+valgrind:
+	valgrind --tool=memcheck --leak-check=yes lab2
+
+clearscr:
+	clear
+
+clean:
+	rm -f *o *~ lab2
+
+.SUFFIXES: .o .c
+
+shell.o: shell.c shell.h

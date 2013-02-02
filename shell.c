@@ -14,7 +14,6 @@ int main(int argc, char* argv[])
   // Allocate an input buffer, we'll resize it if need be
   char *input_buf = malloc(buf_size*sizeof(char));
 
-  printf("Welcome to the shell.\n");
   bool exit_status = false;
   while(exit_status == false)
     {
@@ -73,10 +72,41 @@ int main(int argc, char* argv[])
 	    }
 	}
 
+      /* Prints out the tokens
       for(token_pos = 0; token_pos < token_buf_size; token_pos++)
 	{
 	  if(token_buf[token_pos] != NULL) printf("%s\n", token_buf[token_pos]);
 	  else break;
+	}
+      */
+
+      // Now it's time to fork!
+      pid_t child_pid = fork();
+
+      if(child_pid >= 0)
+	{
+	  // Our fork was succesful!
+	  if(child_pid == 0)
+	    {
+	      // We're in the child!
+	      // printf("In the child!\n");
+	      // Going to need some token processing to deal with piping and redirection
+	      execvp(token_buf[0], token_buf);
+	    }
+	  else
+	    {
+	      // We're in the parent!
+	      //printf("In the parent!\n");
+	      // If last token is not backgrounding wait for child to terminate
+	      int status;
+	      waitpid(child_pid, &status, 0);
+	    }
+	}
+      else
+	{
+	  // Fork failed!
+	  perror("Fork was unsuccesful in creating a new process.");
+	  exit(-1);
 	}
 
 
@@ -85,7 +115,6 @@ int main(int argc, char* argv[])
       // Only accepts the exit command if it is entered on a line by itself
       if( strcmp(token_buf[0], "exit") == 0)
 	{
-	  printf("Exiting the shell...\n");
 	  exit_status = true;
 	}
 

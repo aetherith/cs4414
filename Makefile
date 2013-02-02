@@ -26,7 +26,7 @@ add:
 	git add .
 
 commit:
-	git commit -m
+	git commit
 
 push:
 	git push origin master

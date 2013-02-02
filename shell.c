@@ -42,7 +42,14 @@ int main(int argc, char* argv[])
 	}
       // Here is where we process the input string
       
-      
+      // We're going to want to tokenize our input, so here's an array of char strings
+      unsigned int token_buf_base_size = 20;
+      unsigned int token_buf_size = token_buf_base_size;
+      char** tokens = malloc(token_buf_base_size*sizeof(char*));
+
+
+      // BE CERTAIN TO FREE ALL ELEMENTS BEFORE FREEING THE ARRAY ITSELF!!
+      free(tokens);
 
       // Sloppy exit function, needs improving.  Just here so I can get out for the time being.
       if( strcmp(input_buf, "exit\n") == 0)

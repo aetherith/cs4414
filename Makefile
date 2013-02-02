@@ -22,6 +22,15 @@ clearscr:
 clean:
 	rm -f *o *~ lab2sh
 
+add:
+	git add .
+
+commit:
+	git commit -m
+
+push:
+	git push origin master
+
 .SUFFIXES: .o .c
 
 shell.o: shell.c shell.h

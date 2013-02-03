@@ -23,7 +23,7 @@ clean:
 	rm -f *o *~ lab2sh
 
 add:
-	git add .
+	git add -A
 
 commit:
 	git commit

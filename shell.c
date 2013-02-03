@@ -72,52 +72,44 @@ int main(int argc, char* argv[])
 	    }
 	}
 
-      /* Prints out the tokens
-      for(token_pos = 0; token_pos < token_buf_size; token_pos++)
+      // We want to know how many tokens are being used in the buffer
+      unsigned int token_buf_len = 0;
+      // If we hit a NULL or reach the last addressable element of the array we should stop
+      while((token_buf[token_buf_len] != NULL) && (token_buf_len < token_buf_size)) token_buf_len++;
+      if( token_buf_len > 0 )
 	{
-	  if(token_buf[token_pos] != NULL) printf("%s\n", token_buf[token_pos]);
-	  else break;
-	}
-      */
-
-      // Now it's time to fork!
-      pid_t child_pid = fork();
-
-      if(child_pid >= 0)
-	{
-	  // Our fork was succesful!
-	  if(child_pid == 0)
-	    {
-	      // We're in the child!
-	      // printf("In the child!\n");
-	      // Going to need some token processing to deal with piping and redirection
-	      execvp(token_buf[0], token_buf);
-	    }
+	  // Sloppy exit function
+	  if( strcmp(token_buf[0], "exit") == 0) exit_status = true;
 	  else
 	    {
-	      // We're in the parent!
-	      //printf("In the parent!\n");
-	      // If last token is not backgrounding wait for child to terminate
-	      int status;
-	      waitpid(child_pid, &status, 0);
+	      // Now it's time to fork!
+	      pid_t child_pid = fork();
+
+	      if(child_pid >= 0)
+		{
+		  // Our fork was succesful!
+		  if(child_pid == 0)
+		    {
+		      // We're in the child!
+		      execvp(token_buf[0], token_buf);
+		    }
+		  else
+		    {
+		      // We're in the parent!
+		      //printf("In the parent!\n");
+		      // If last token is not backgrounding wait for child to terminate
+		      int status;
+		      waitpid(child_pid, &status, 0);
+		    }
+		}
+	      else
+		{
+		  // Fork failed!
+		  perror("Fork was unsuccesful in creating a new process.");
+		  exit(-1);
+		}
 	    }
 	}
-      else
-	{
-	  // Fork failed!
-	  perror("Fork was unsuccesful in creating a new process.");
-	  exit(-1);
-	}
-
-
-
-      // Sloppy exit function, needs improving.  Just here so I can get out for the time being.
-      // Only accepts the exit command if it is entered on a line by itself
-      if( strcmp(token_buf[0], "exit") == 0)
-	{
-	  exit_status = true;
-	}
-
       free(token_buf);
 
       // Now we reallocate our buffer down to the original size and fill it with \0

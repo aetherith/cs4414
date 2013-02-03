@@ -107,9 +107,10 @@ int main(int argc, char* argv[])
 			}
 
 		      // Now we want to create a new array of parameters for the child
+		      // Problem in here regarding how many parameters there are (when redirecting we chop off one)
 		      unsigned int param_buf_size;
-		      if( redirect_token_pos > 1 ) param_buf_size = redirect_token_pos - 1;
-		      else if( redirect_token_pos == 1 ) param_buf_size = 1;
+		      if( redirect_token_pos > 0 ) param_buf_size = redirect_token_pos;
+		      else if( redirect_token_pos == 0 ) param_buf_size = 1;
 		      else param_buf_size = token_buf_len;
 
 		      // We need space for all the parameters as well as the terminating NULL pointer
@@ -128,6 +129,15 @@ int main(int argc, char* argv[])
 			  param_buf[i] = token_buf[i];
 			}
 		      param_buf[param_buf_size] = NULL;
+
+		      // Print the parameters
+		      i = 0;
+		      while( param_buf[i] != NULL)
+			{
+			  printf("%s ", param_buf[i]);
+			  i++;
+			}
+		      printf("\n");
 
 		      // Now we set up redirection/dumping output to /dev/null for background processes
 		      // Dumping background output if the command doesn't already redirect to a file

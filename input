@@ -1,2 +1,10 @@
-/
-/home
+input
+lab2sh
+Makefile
+README.md
+shell.c
+shell.h
+shell.o
+teststdin
+test_stdin.c
+test_stdin.c~

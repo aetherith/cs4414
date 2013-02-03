@@ -74,29 +74,74 @@ int main(int argc, char* argv[])
 
       // We want to know how many tokens are being used in the buffer
       unsigned int token_buf_len = 0;
+
       // If we hit a NULL or reach the last addressable element of the array we should stop
       while((token_buf[token_buf_len] != NULL) && (token_buf_len < token_buf_size)) token_buf_len++;
-      if( token_buf_len > 0 )
+
+      // Find the first file redirection operator and store its position
+      unsigned int redirect_token_pos = find_redirect(token_buf, &token_buf_len);
+
+      // redirect_mode takes on one of 4 values 0 - no redirect, 1 - redirect overwrite, 2 - redirect append, 3 - redirect input
+      int redirect_mode = 0;
+      char *redirect_file_name;
+
+      // If we found a redirection operator in a valid position with another token following it, set the next token as the file to redirect to
+      // Else set the file to redirect to as ""
+      if(redirect_token_pos > 0)
+	{
+	  // If we have space in the buffer to have an additional filename
+	  if( redirect_token_pos + 1 < token_buf_len ) redirect_file_name = token_buf[redirect_token_pos + 1];
+	  else redirect_file_name = "";
+	  // Now we set the type of redirection
+	  if( strcmp(token_buf[redirect_token_pos], ">") == 0 ) redirect_mode = 1;
+	  else if( strcmp(token_buf[redirect_token_pos], ">>") == 0) redirect_mode = 2;
+	  else if( strcmp(token_buf[redirect_token_pos], "<") == 0) redirect_mode = 3;
+	}
+      else redirect_file_name = "";
+      printf("Redirect mode: %i\n", redirect_mode);
+
+      // I think the trick is to create the new file descriptors here and then just have the child do the same thing every time
+      FILE *input_file = stdin;
+      FILE *output_file = stdout;
+
+      // Now we want to create a new array of parameters for the child
+      unsigned int param_buf_size;
+      if(redirect_token_pos > 1) param_buf_size = redirect_token_pos - 1;
+      else if( redirect_token_pos == 1) param_buf_size = 1;
+      else param_buf_size = token_buf_len;
+
+      // We need space for all the parameters as well as the terminating NULL pointer
+      char *param_buf[param_buf_size + 1];
+
+      unsigned int i;
+      for( i = 0; i < param_buf_size; i++) param_buf[i] = token_buf[i];
+      param_buf[param_buf_size] = NULL;
+
+      if( param_buf_size > 0 )
 	{
 	  // Sloppy exit function
-	  if( strcmp(token_buf[0], "exit") == 0) exit_status = true;
+	  if( strcmp(param_buf[0], "exit") == 0) exit_status = true;
 	  else
 	    {
 	      // Now it's time to fork!
 	      pid_t child_pid = fork();
-
 	      if(child_pid >= 0)
 		{
 		  // Our fork was succesful!
 		  if(child_pid == 0)
 		    {
 		      // We're in the child!
-		      execvp(token_buf[0], token_buf);
+		      printf("%s\n",param_buf[0]);
+		      int retval = execvp(param_buf[0], param_buf);
+		      if( retval == -1 )
+			{
+			  printf("Could not exec: %s\n", param_buf[0]);
+			  exit(-1);
+			}
 		    }
 		  else
 		    {
 		      // We're in the parent!
-		      //printf("In the parent!\n");
 		      // If last token is not backgrounding wait for child to terminate
 		      int status;
 		      waitpid(child_pid, &status, 0);
@@ -124,5 +169,17 @@ int main(int argc, char* argv[])
     }
 
   free(input_buf);
+  return 0;
+};
+
+unsigned int find_redirect(char **token_buf, unsigned int *token_buf_len)
+{
+  unsigned int i;
+  for(i = 0; i < *token_buf_len; i++)
+    {
+      if( (strcmp(token_buf[i], ">") == 0) ||
+	  (strcmp(token_buf[i], ">>") == 0) ||
+	  (strcmp(token_buf[i], "<") == 0)) return i;
+    }
   return 0;
 };

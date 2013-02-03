@@ -78,49 +78,6 @@ int main(int argc, char* argv[])
       // If we hit a NULL or reach the last addressable element of the array we should stop
       while((token_buf[token_buf_len] != NULL) && (token_buf_len < token_buf_size)) token_buf_len++;
 
-      /*
-      // redirect_mode takes on one of 4 values 0 - no redirect, 1 - redirect overwrite, 2 - redirect append, 3 - redirect input
-      int redirect_mode = 0;
-      char *redirect_file_name;
-
-      // If we found a redirection operator in a valid position with another token following it, set the next token as the file to redirect to
-      // Else set the file to redirect to as ""
-      if(redirect_token_pos > 0)
-	{
-	  // If we have space in the buffer to have an additional filename
-	  if( redirect_token_pos + 1 < token_buf_len ) redirect_file_name = token_buf[redirect_token_pos + 1];
-	  else redirect_file_name = "";
-	  // Now we set the type of redirection
-	  if( strcmp(token_buf[redirect_token_pos], ">") == 0 ) redirect_mode = 1;
-	  else if( strcmp(token_buf[redirect_token_pos], ">>") == 0) redirect_mode = 2;
-	  else if( strcmp(token_buf[redirect_token_pos], "<") == 0) redirect_mode = 3;
-	}
-      else redirect_file_name = "";
-      printf("Redirect mode: %i\n", redirect_mode);
-
-      // I think the trick is to create the new file descriptors here and then just have the child do the same thing every time
-      FILE *input_file = stdin;
-      FILE *output_file = stdout;
-
-      // Now we want to create a new array of parameters for the child
-      unsigned int param_buf_size;
-      if(redirect_token_pos > 1) param_buf_size = redirect_token_pos - 1;
-      else if( redirect_token_pos == 1) param_buf_size = 1;
-      else param_buf_size = token_buf_len;
-
-      // We need space for all the parameters as well as the terminating NULL pointer
-      char *param_buf[param_buf_size + 1];
-
-      unsigned int i;
-      for( i = 0; i < param_buf_size; i++)
-	{
-	  // We are assuming that the background operator will only ever appear at the end of a line
-	  if( strcmp(token_buf[i], "&") == 0 ) break;
-	  param_buf[i] = token_buf[i];
-	}
-      param_buf[param_buf_size] = NULL;
-      */
-
       // If we have valid tokens in the buffer
       if( token_buf_len > 0 )
 	{
@@ -173,6 +130,52 @@ int main(int argc, char* argv[])
 		      param_buf[param_buf_size] = NULL;
 
 		      // Now we set up redirection/dumping output to /dev/null for background processes
+		      // Dumping background output if the command doesn't already redirect to a file
+		      if( ( redirect_token_pos == 0) && ( is_background == true ) )
+			{
+			  fclose(stdout);
+			  stdout = fopen("/dev/null", "w");
+			  if( stdout == NULL )
+			    {
+			      perror("Couldn't open /dev/null for writing.");
+			      exit(-1);
+			    }
+			}
+		      
+		      // Now we deal with all other redirection
+		      if( redirect_token_pos > 0 )
+			{
+			  if( strcmp(token_buf[redirect_token_pos], ">") == 0 )
+			    {
+			      fclose(stdout);
+			      stdout = fopen(redirect_file_name, "w");
+			      if( stdout == NULL )
+				{
+				  perror("Couldn't open output file for writing.");
+				  exit(-1);
+				}
+			    }
+			  if( strcmp(token_buf[redirect_token_pos], ">>") == 0 )
+			    {
+			      fclose(stdout);
+			      stdout = fopen(redirect_file_name, "a");
+			      if( stdout == NULL )
+				{
+				  perror("Couldn't open output file for appending.");
+				  exit(-1);
+				}
+			    }
+			  if( strcmp(token_buf[redirect_token_pos], "<") == 0 )
+			    {
+			      fclose(stdin);
+			      stdin = fopen(redirect_file_name, "r");
+			      if( stdin == NULL )
+				{
+				  perror("Couldn't open input file for reading.");
+				  exit(-1);
+				}
+			    }
+			}
 
 		      int retval = execvp(param_buf[0], param_buf);
 		      if( retval == -1 )

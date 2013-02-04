@@ -130,15 +130,6 @@ int main(int argc, char* argv[])
 			}
 		      param_buf[param_buf_size] = NULL;
 
-		      // Print the parameters
-		      i = 0;
-		      while( param_buf[i] != NULL)
-			{
-			  printf("%s ", param_buf[i]);
-			  i++;
-			}
-		      printf("\n");
-
 		      // Now we set up redirection/dumping output to /dev/null for background processes
 		      // Dumping background output if the command doesn't already redirect to a file
 		      if( ( redirect_token_pos == 0) && ( is_background == true ) )

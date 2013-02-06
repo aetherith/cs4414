@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include "process.h"
 
 // Return the position of the first redirection type token
 // The token_buf_len is the *actual* number of valid tokens in the buffer, not the zero-index position of the last token

@@ -6,7 +6,7 @@
 
 CFLAGS=-Wall
 CC=gcc $(CFLAGS)
-OFILES=shell.o
+OFILES=shell.o process.o
 
 default: $(OFILES)
 	$(CC) -g -o lab2sh $(OFILES)
@@ -33,4 +33,5 @@ push:
 
 .SUFFIXES: .o .c
 
-shell.o: shell.c shell.h
+shell.o: shell.c shell.h process.h process.c
+process.o: process.h process.c

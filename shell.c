@@ -88,51 +88,75 @@ int main(int argc, char* argv[])
 	  if( strcmp(token_buf[0], "exit") == 0) exit_status = true;
 	  else
 	    {
-	      // Now it's time to fork!
-	      pid_t child_pid = fork();
-	      if(child_pid >= 0)
+	      // We need a dynamic array of pointers to int arrays 2 ints long for pipes
+	      unsigned int pipe_buf_base_size = 10;
+	      unsigned int pipe_buf_size = pipe_buf_base_size;
+	      int *pipe_buf = malloc(pipe_buf_size*sizeof(int*));
+	      // Where in the buffer are we?
+	      unsigned int pipe_buf_pos = 0;
+
+	      // The parent is to keep looping until it processes all of the available tokens
+	      while( start_token_proc_at < token_buf_len )
 		{
-		  // Our fork was succesful!
-		  if(child_pid == 0)
+		  // Look for the first file redirection opereator and store its position
+		  unsigned int redirect_token_pos = find_redirect(token_buf, &token_buf_len, &start_token_proc_at);
+		  char* redirect_file_name;
+		  
+		  // If we find a redirection operator in a valid position with another token folowing it,
+		  // set the next token as the file to redirect to.
+		  // Else set the file to redirect to as ""
+		  if( redirect_token_pos > 0 )
 		    {
-		      // We're in the child! 
-		      // Look for the first file redirection opereator and store its position
-		      unsigned int redirect_token_pos = find_redirect(token_buf, &token_buf_len, &start_token_proc_at);
-		      char* redirect_file_name;
-		      
-		      // If we find a redirection operator in a valid position with another token folowing it, set the next token as the file to redirect to
-		      // Else set the file to redirect to as ""
-		      if( redirect_token_pos > 0 )
+		      // If we have space in the buffer to have an additonal filename
+		      if( redirect_token_pos + 1 < token_buf_len ) redirect_file_name = token_buf[redirect_token_pos + 1];
+		      else redirect_file_name = "";
+		    }
+
+		  // Let's look for piping!
+		  unsigned int pipe_token_pos = find_pipe(token_buf, &token_buf_len, &start_token_proc_at);
+
+		  // Create the process object to hold the information on the next to spawn child
+		  process_t child_process;
+		  process_init(child_process);
+
+		  // Now we want to create a new array of parameters for the child
+		  unsigned int param_buf_size;
+		  // If we have no redirects and no pipes we want the remainder of token_buf as our params
+		  if( (redirect_token_pos == 0) && (pipe_token_pos == 0) )
+		    param_buf_size = (token_buf_len - (start_token_proc_at + 1));
+		  // If we have a redirect before a pipe the pipe takes precidence
+		  if( ( (redirect_token_pos < pipe_token_pos) )
+		  
+		  // We need space for all the parameters as well as the terminating NULL pointer
+		  char *param_buf[param_buf_size + 1];
+		  
+		  bool is_background = false;
+		  unsigned int i;
+		  for( i = 0; i < param_buf_size; i++)
+		    {
+		      // We are assuming that the background operator will only ever appear at the end of a line
+		      if( strcmp(token_buf[i], "&") == 0 )
 			{
-			  // If we have space in the buffer to have an additonal filename
-			  if( redirect_token_pos + 1 < token_buf_len ) redirect_file_name = token_buf[redirect_token_pos + 1];
-			  else redirect_file_name = "";
+			  is_background = true;
+			  break;
 			}
+		      param_buf[i] = token_buf[i];
+		    }
+		  param_buf[param_buf_size] = NULL;
+		  
+		  for( i = 0; i < param_buf_size; i++ ) printf("%s\n", param_buf[i]);
 
-		      // Now we want to create a new array of parameters for the child
-		      // Problem in here regarding how many parameters there are (when redirecting we chop off one)
-		      unsigned int param_buf_size;
-		      if( redirect_token_pos > 0 ) param_buf_size = redirect_token_pos;
-		      else param_buf_size = token_buf_len;
-
-		      // We need space for all the parameters as well as the terminating NULL pointer
-		      char *param_buf[param_buf_size + 1];
-
-		      bool is_background = false;
-		      unsigned int i;
-		      for( i = 0; i < param_buf_size; i++)
+		  // Now it's time to fork!
+		  pid_t child_pid = fork();
+		  if(child_pid >= 0)
+		    {
+		      // Our fork was succesful!
+		      if(child_pid == 0)
 			{
-			  // We are assuming that the background operator will only ever appear at the end of a line
-			  if( strcmp(token_buf[i], "&") == 0 )
-			    {
-			      is_background = true;
-			      break;
-			    }
-			  param_buf[i] = token_buf[i];
-			}
-		      param_buf[param_buf_size] = NULL;
+			  // We're in the child! 
+			  
 
-		      for( i = 0; i < param_buf_size; i++ ) printf("%s\n", param_buf[i]);
+			  
 
 		      // Now we set up redirection/dumping output to /dev/null for background processes
 		      // Dumping background output if the command doesn't already redirect to a file

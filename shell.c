@@ -78,6 +78,9 @@ int main(int argc, char* argv[])
       // If we hit a NULL or reach the last addressable element of the array we should stop
       while((token_buf[token_buf_len] != NULL) && (token_buf_len < token_buf_size)) token_buf_len++;
 
+      // Store where in the token buffer we want to start processing tokens at
+      unsigned int start_token_proc_at = 0;
+
       // If we have valid tokens in the buffer
       if( token_buf_len > 0 )
 	{
@@ -92,9 +95,9 @@ int main(int argc, char* argv[])
 		  // Our fork was succesful!
 		  if(child_pid == 0)
 		    {
-		      // We're in the child!
+		      // We're in the child! 
 		      // Look for the first file redirection opereator and store its position
-		      unsigned int redirect_token_pos = find_redirect(token_buf, &token_buf_len);
+		      unsigned int redirect_token_pos = find_redirect(token_buf, &token_buf_len, &start_token_proc_at);
 		      char* redirect_file_name;
 		      
 		      // If we find a redirection operator in a valid position with another token folowing it, set the next token as the file to redirect to
@@ -110,7 +113,6 @@ int main(int argc, char* argv[])
 		      // Problem in here regarding how many parameters there are (when redirecting we chop off one)
 		      unsigned int param_buf_size;
 		      if( redirect_token_pos > 0 ) param_buf_size = redirect_token_pos;
-		      else if( redirect_token_pos == 0 ) param_buf_size = 1;
 		      else param_buf_size = token_buf_len;
 
 		      // We need space for all the parameters as well as the terminating NULL pointer
@@ -129,6 +131,8 @@ int main(int argc, char* argv[])
 			  param_buf[i] = token_buf[i];
 			}
 		      param_buf[param_buf_size] = NULL;
+
+		      for( i = 0; i < param_buf_size; i++ ) printf("%s\n", param_buf[i]);
 
 		      // Now we set up redirection/dumping output to /dev/null for background processes
 		      // Dumping background output if the command doesn't already redirect to a file
@@ -221,14 +225,23 @@ int main(int argc, char* argv[])
   return 0;
 };
 
-unsigned int find_redirect(char **token_buf, unsigned int *token_buf_len)
+unsigned int find_redirect(char **token_buf, unsigned int *token_buf_len, unsigned int *start_pos)
 {
   unsigned int i;
-  for(i = 0; i < *token_buf_len; i++)
+  for(i = *start_pos; i < *token_buf_len; i++)
     {
       if( (strcmp(token_buf[i], ">") == 0) ||
 	  (strcmp(token_buf[i], ">>") == 0) ||
 	  (strcmp(token_buf[i], "<") == 0)) return i;
+    }
+  return 0;
+};
+
+unsigned int find_pipe(char **token_buf, unsigned int *token_buf_len, unsigned int *start_pos){
+  unsigned int i;
+  for( i=*start_pos; i < *token_buf_len; i++ )
+    {
+      if( strcmp(token_buf[i], "|") == 0) return i;
     }
   return 0;
 };

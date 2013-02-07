@@ -35,10 +35,9 @@ aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
    generate a table similar to the one shown for #1.
 
 4: Book #3.5
-   After a fork the parent and child processes share stack and heap contents as well
-   as any open file handles.  They do not however share any memory segments as when
-   fork is called a complete and unique copy of the parent's address space is created
-   for the child process.
+   During a fork the only resources *shared* between parent and child are shared
+   memory segments.  The child is provided with its own unique and separate copy of
+   the parent's address space in which to work in memory.
 
 5: Book #3.9
    When the kernel performs a context switch it takes the current state of the CPU
@@ -50,26 +49,38 @@ aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
 
 6: Book #3.12
    P
-   |- C i = 0
-   |  |- C i = 1
-   |  |  |- C i = 2
-   |  |  |  |- C i = 3
-   |  |  |- C i = 3
-   |  |- C i = 2
-   |  |  |- C i = 3
-   |  |- C i = 3
-   |- C i = 1
-   |  |- C i = 2
-   |  |  |- C i = 3
-   |  |- C i = 3
-   |- C i = 2
-   |  |- C i = 3
-   |- C i = 3
+   |- C1 i = 0
+   |  |- C2 i = 1
+   |  |  |- C3 i = 2
+   |  |  |  |- C4 i = 3
+   |  |  |- C5 i = 3
+   |  |- C6 i = 2
+   |  |  |- C7 i = 3
+   |  |- C8 i = 3
+   |- C9 i = 1
+   |  |- C10 i = 2
+   |  |  |- C11 i = 3
+   |  |- C12 i = 3
+   |- C13 i = 2
+   |  |- C14 i = 3
+   |- C15 i = 3
 
-   A total of  16 processes are created.
+   A total of  16 processes are created.  From the first fork(), a copy of the initial
+   process is created (C1), so 1 child process would exist.  Now in C1 the loop continues
+   and another child (C2) is created which then creates a child for itself (C3) and C3
+   creates yet another child (C4) before reaching the exit state of the for loop.  Tracing
+   back up the tree C2 spawns C5 before terminating itself.  C1 then spawns C6 and the 
+   pattern continues down through the tree.
 
 7: Book #3.15
-      
+   (1)  Ordinary pipes are more suitable than named pipes when we do not want to
+   grant access through the pipes after the communication is finished, because
+   ordinary pipes exist only while the processes are communicating with each other.
+   (2) Named pipes are more suitable than ordinary pipes when the communication has
+   to be bidirectional, and when the two processes have no parent-child relationship.
+   Also, named pipes are more suitable for communication among several processes. 
+   Named pipes can be used by several processes, and will continue to exist after 
+   communicating processes have finished. 
 
 8: Additonal Assumptions
    * Only the input or the output may be redirected from a command in a single line.  If a second redirect operator is applied then it and its operands are ignored.

@@ -1,5 +1,5 @@
-/* Thomas Foulds
- * tcf9bj
+/* Thomas Foulds (tcf9bj)
+ * Hong Moon (hsm5xw)
  * 02/01/13
  * CS4414
  * shell.h

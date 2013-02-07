@@ -1,5 +1,5 @@
 # Thomas Foulds (tcf9bj)
-# Hong Moon
+# Hong Moon (hsm5xw)
 # Analysis for Assignment 2
 
 1:  Transcript of ps follows:
@@ -26,16 +26,51 @@ aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
     When the child exits it cleans up all of its file handles and associated
     memory so that there is nothing left over for the parent to interact with.
     Upon returning to the parent process, the parent reaps the child's entry
-    out of the PCB and then continues its own operation.
+    out of the process table and then continues its own operation.
 
 3: If the shell exits while there are still background processes running, those
    processes become orphans and are adoped by the init process.  It will occasionally
-   run wait() to reap completed processes out of the PCB.  If the user wants to know
-   what background processes are still running they can execute ps -uf to generate
-   a table similar to the one shown for #1.
+   run wait() to reap completed processes out of the process table.  If the user wants
+   to know what background processes are still running they can execute ps -uf to
+   generate a table similar to the one shown for #1.
 
 4: Book #3.5
    After a fork the parent and child processes share stack and heap contents as well
    as any open file handles.  They do not however share any memory segments as when
    fork is called a complete and unique copy of the parent's address space is created
    for the child process.
+
+5: Book #3.9
+   When the kernel performs a context switch it takes the current state of the CPU
+   (PC, registers, etc.) and stores them in the PCB of the process that is being switched
+   out.  Then the PCB of the process being switched in is loaded into the CPU returning it
+   to the last state it held during the switched in process.  Some CPUs may also have 
+   multiple register sets to reduce the time required to context switch by simply changing
+   the pointer to the current working set of registers.
+
+6: Book #3.12
+   P
+   |- C i = 0
+   |  |- C i = 1
+   |  |  |- C i = 2
+   |  |  |  |- C i = 3
+   |  |  |- C i = 3
+   |  |- C i = 2
+   |  |  |- C i = 3
+   |  |- C i = 3
+   |- C i = 1
+   |  |- C i = 2
+   |  |  |- C i = 3
+   |  |- C i = 3
+   |- C i = 2
+   |  |- C i = 3
+   |- C i = 3
+
+   A total of  16 processes are created.
+
+7: Book #3.15
+      
+
+8: Additonal Assumptions
+   * Only the input or the output may be redirected from a command in a single line.  If a second redirect operator is applied then it and its operands are ignored.
+   * Background processes should not suppress STDERR, only STDOUT, as the user should be alerted if there are errors in their background processes.

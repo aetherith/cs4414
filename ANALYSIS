@@ -1,0 +1,38 @@
+# Thomas Foulds (tcf9bj)
+# Hong Moon
+# Analysis for Assignment 2
+
+1:  Transcript of ps follows:
+USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+aetheri+ 11041  0.0  0.0  30292  3628 pts/5    SNs  16:44   0:00 zsh
+aetheri+ 11964  0.3  0.0 245540 19148 pts/5    SN+  17:31   0:05  \_ emacs -nw ANALYSIS
+aetheri+ 10393  0.0  0.0  30292  3628 pts/6    SNs  16:12   0:00 zsh
+aetheri+ 12456  0.0  0.0   4212   344 pts/6    SN+  17:57   0:00  \_ ./lab2sh
+aetheri+ 12459 39.2  0.0  24360  4852 pts/6    RN+  17:57   0:02      \_ ls -alR /
+aetheri+ 12464  0.0  0.0  10828  1368 pts/6    RN+  17:57   0:00      \_ ps -uf
+aetheri+ 29113  0.0  0.0  32532  3960 pts/3    SNs  Feb05   0:00 zsh
+aetheri+ 29173  0.0  0.0  12972  1072 pts/3    SN+  Feb05   0:00  \_ less btransx264
+aetheri+ 19925  0.0  0.0  32760  4240 pts/2    SNs  Feb05   0:00 zsh
+aetheri+ 10381  0.0  0.0  17140  1036 pts/2    SN+  16:12   0:00  \_ screen
+aetheri+ 19867  0.0  0.0  30288  3504 pts/4    SNs  Feb05   0:00 zsh
+aetheri+ 19879  0.0  0.0  35688  3228 pts/4    SN+  Feb05   0:11  \_ ssh forseti
+aetheri+ 12155  0.0  0.0  32584  4032 pts/0    SNs  Feb05   0:00 zsh
+aetheri+ 19923  0.8  0.0  15632  3680 pts/0    SN+  Feb05  12:03  \_ htop
+aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
+
+2:  No there is no danger of these two processes interfering with eachother. The
+    parent process is set to wait until the child has exited before continuing 
+    its own operations since the new shell was started in the foreground.
+    When the child exits it cleans up all of its file handles and associated
+    memory so that there is nothing left over for the parent to interact with.
+    Upon returning to the parent process, the parent reaps the child's entry
+    out of the PCB and then continues its own operation.
+
+3: If the shell exits while there are still background processes running, those
+   processes become orphans and are adoped by the init process.  It will occasionally
+   run wait() to reap completed processes out of the PCB.  If the user wants to know
+   what background processes are still running they can execute ps -uf to generate
+   a table similar to the one shown for #1.
+
+4: Book #3.5
+   

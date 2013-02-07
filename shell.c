@@ -110,7 +110,6 @@ int main(int argc, char* argv[])
 		      // Problem in here regarding how many parameters there are (when redirecting we chop off one)
 		      unsigned int param_buf_size;
 		      if( redirect_token_pos > 0 ) param_buf_size = redirect_token_pos;
-		      else if( redirect_token_pos == 0 ) param_buf_size = 1;
 		      else param_buf_size = token_buf_len;
 
 		      // We need space for all the parameters as well as the terminating NULL pointer

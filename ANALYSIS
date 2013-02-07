@@ -35,4 +35,7 @@ aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
    a table similar to the one shown for #1.
 
 4: Book #3.5
-   
+   After a fork the parent and child processes share stack and heap contents as well
+   as any open file handles.  They do not however share any memory segments as when
+   fork is called a complete and unique copy of the parent's address space is created
+   for the child process.

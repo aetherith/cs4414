@@ -65,12 +65,17 @@ aetheri+  9347  0.0  0.0 128972 21744 pts/1    SNsl+ Feb04   0:18 weechat-curses
    |  |- C14 i = 3
    |- C15 i = 3
 
-   A total of  16 processes are created.  From the first fork(), a copy of the initial
-   process is created (C1), so 1 child process would exist.  Now in C1 the loop continues
-   and another child (C2) is created which then creates a child for itself (C3) and C3
-   creates yet another child (C4) before reaching the exit state of the for loop.  Tracing
-   back up the tree C2 spawns C5 before terminating itself.  C1 then spawns C6 and the 
-   pattern continues down through the tree.
+   A total of 16 processes are created.  From the given code, the fork() function is invoked
+   for 4 times.  In the above diagram, "CX" represents the x-th number of child created.  Each
+   child process is indicated with which i-th iteration it is created.
+
+   From the first fork(), a copy of the initial parent process is created, so 1 child process
+   will be created for i = 0.  From the second fork(), double the number of processes from the
+   previous fork(), or 2*1 = 2 child processes will be created for i = 1.  Likewise, from the
+   third fork(), 2*2 = 4 child processes will be created for i = 2.  Lastly, from the fourth
+   fork(), 2*4 = 8 child processes will be created for i = 3.
+
+   Therefore, including the initial parent process, 1+(1+2+4+8) = 16 processes will be created.
 
 7: Book #3.15
    (1)  Ordinary pipes are more suitable than named pipes when we do not want to

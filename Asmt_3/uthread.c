@@ -3,10 +3,10 @@
  * thread.c
  */
 
-#include "thread.h"
+#include "uthread.h"
 
 void uthread_init(){
-  list_init(&thread_queue);
+  list_init(&thread_queue, thread_compare_pri, thread_data_delete);
 };
 
 int uthread_create(void (*func)(int), int val, int pri){

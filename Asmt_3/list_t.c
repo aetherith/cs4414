@@ -1,8 +1,7 @@
-/* Thomas Foulds
- * tcf9bj
- * 01/23/13
+/* Thomas Foulds (tcf9bj)
+ * 02/18/13
  * CS4414
- * list_t.c
+ * list_t.c REV. 2
  */
 
 #include <stdio.h>
@@ -106,4 +105,15 @@ void list_remove_head(list_t *l){
     {
       printf("You cannot remove from an empty list.\n");
     }
+};
+
+void list_rotate_one(list_t *l){
+  if(l->length > 1){
+    list_item_t *old_head = l->head;
+    l->head = old_head->next;
+    l->head->prev = NULL;
+    old_head->prev = l->tail;
+    old_head->next = NULL;
+    l->tail = old_head;
+  }
 };

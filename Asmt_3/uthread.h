@@ -8,6 +8,7 @@
 
 #include <sys/ucontext.h>
 #include "list_t.h"
+#include "thread_t.h"
 
 list_t thread_queue;
 

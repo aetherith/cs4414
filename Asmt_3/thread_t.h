@@ -8,7 +8,7 @@
 #define THREAD_T_H
 
 #include <stdlib.h>
-#include <bool.h>
+#include <stdbool.h>
 #include <sys/ucontext.h>
 #include "list_item_t.h"
 

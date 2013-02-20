@@ -8,20 +8,18 @@
 #define THREAD_T_H
 
 #include <stdlib.h>
+#include <bool.h>
 #include <sys/ucontext.h>
 #include "list_item_t.h"
 
 typedef struct thread{
   ucontext_t *ucp;
-  void (*main)(int val);
-  int val;
   int pri;
+  bool free_stack;
 } thread_t;
 
 void thread_init(thread_t *t,
                  ucontext_t *ucp,
-                 void (*main)(int val),
-                 int val,
                  int pri);
 
 // Data delete method for use with linked list

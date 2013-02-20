@@ -8,20 +8,25 @@
 
 void thread_init(thread_t *t,
                  ucontext_t *ucp,
-                 void (*main)(int val),
-                 int val,
                  int pri){
   t->ucp = ucp;
-  t->main = main;
-  t->val = val;
   t->pri = pri;
+  t->free_stack = true;
 };
 
+// Clean up the thread object when it is deleted from the linked list
 void thread_data_delete(void *item){
-  // I'm not certain if there is any dynamically allocated data inside the thread object so we're leaving the minimal stub for now
-  free(((list_item_t*)item)->data);
+  thread_t *t = (thread_t*)(((list_item_t*)item)->data);
+  // If the thread's stack was dynamically allocated, i.e. the thread
+  // was created using uthread_create() we must deallocate its stack space.
+  if( t->free_stack ) free(t->ucp->uc_stack.ss_sp);
+  // Deallocate the dynamically created ucontext_t object
+  free(t->ucp);
+  // Deallocate the thread object itself
+  free(t);
 };
 
+// Compare two thread objects based on their priority value
 int thread_compare_pri(const void *key, const void *with){
   list_item_t **arg1 = (list_item_t**)key;
   list_item_t **arg2 = (list_item_t**)with;

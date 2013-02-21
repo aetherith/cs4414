@@ -19,7 +19,7 @@ int main()
 
 	for(i=0;i < 10;i++)
 	{
-		printf("This is the main function\n");
+          printf("This is the main function: %i\n", i);
 		uthread_yield();
 	}
 	printf("I am main and I am exiting\n");

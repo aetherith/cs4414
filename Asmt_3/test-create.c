@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
       
   uthread_yield();
   printf("back in main\n");
+  uthread_dinit();
   uthread_exit();
   return 0;
 }

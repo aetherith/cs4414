@@ -103,21 +103,19 @@ void list_remove_head(list_t *l){
     }
   else
     {
-      printf("You cannot remove from an empty list.\n");
+      // If we have an empty list do nothing.
+      // printf("You cannot remove from an empty list.\n");
     }
 };
 
 void list_rotate_one(list_t *l){
-  printf("== list_rotate_one ==\n");
   if(l->length > 1){
     list_item_t *old_head = l->head;
     l->head = old_head->next;
-    printf("New head: %p\n", l->head);
     l->head->prev = NULL;
     old_head->prev = l->tail;
     old_head->next = NULL;
     l->tail->next = old_head;
     l->tail = old_head;
   }
-  printf("!= list_rotate_one =!\n");
 };

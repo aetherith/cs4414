@@ -32,4 +32,7 @@ void uthread_yield();
 // queue to begin running.
 void uthread_exit();
 
+// Delete and free the entire thread queue
+void uthread_dinit();
+
 #endif

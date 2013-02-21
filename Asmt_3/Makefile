@@ -6,13 +6,13 @@
 CFLAGS=-Wall
 CC=gcc $(CFLAGS)
 OFILES=list_item_t.o list_t.o thread_t.o uthread.o
-SOFILES=test-simple.o $(OFILES)
+SOFILES=test-create.o $(OFILES)
 MOFILES=test-multi-threads.o $(OFILES)
 
 default: $(SOFILES)
 	$(CC) -g -o lab3s $(SOFILES)
 
-multithread:
+multi: $(MOFILES)
 	$(CC) -g -o lab3m $(MOFILES)
 
 threadpkg1:
@@ -21,7 +21,7 @@ threadpkg1:
 test: clean default clearscr valgrind
 
 valgrind:
-	valgrind --tool=memcheck --leak-check=yes ./lab3s
+	valgrind --tool=memcheck --leak-check=yes ./lab3m
 
 clearscr:
 	clear
@@ -43,8 +43,7 @@ pushm:
 list_item_t.o: list_item_t.c list_item_t.h
 list_t.o: list_t.c list_t.h list_item_t.h
 test-create.o: test-create.c uthread.h list_t.h list_item_t.h thread_t.h
-test-multi-threads.o: test-multi-threads.c uthread.h list_t.h \
- list_item_t.h thread_t.h
+test-multi-threads.o: test-multi-threads.c uthread.h list_t.h list_item_t.h thread_t.h
 test-simple.o: test-simple.c uthread.h list_t.h list_item_t.h thread_t.h
 thread_t.o: thread_t.c thread_t.h list_item_t.h
 uthread.o: uthread.c uthread.h list_t.h list_item_t.h thread_t.h

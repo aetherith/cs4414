@@ -1,5 +1,6 @@
 /* Thomas Foulds (tcf9bj)
  * 02/16/13
+ * CS4414
  * thread.h
  */
 
@@ -11,6 +12,7 @@
 #include "thread_t.h"
 
 list_t thread_queue;
+int thread_id;
 
 // Initialize the thread queue
 void uthread_init();

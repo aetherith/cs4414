@@ -8,9 +8,10 @@
 
 void thread_init(thread_t *t,
                  ucontext_t *ucp,
-                 int pri){
+                 int pri, int id){
   t->ucp = ucp;
   t->pri = pri;
+  t->id = id;
   t->free_stack = true;
 };
 

@@ -6,7 +6,7 @@
 CFLAGS=-Wall
 CC=gcc $(CFLAGS)
 OFILES=list_item_t.o list_t.o thread_t.o uthread.o
-SOFILES=test-create.o $(OFILES)
+SOFILES=test-simple.o $(OFILES)
 MOFILES=test-multi-threads.o $(OFILES)
 
 default: $(SOFILES)
@@ -45,5 +45,6 @@ list_t.o: list_t.c list_t.h list_item_t.h
 test-create.o: test-create.c uthread.h list_t.h list_item_t.h thread_t.h
 test-multi-threads.o: test-multi-threads.c uthread.h list_t.h \
  list_item_t.h thread_t.h
+test-simple.o: test-simple.c uthread.h list_t.h list_item_t.h thread_t.h
 thread_t.o: thread_t.c thread_t.h list_item_t.h
 uthread.o: uthread.c uthread.h list_t.h list_item_t.h thread_t.h

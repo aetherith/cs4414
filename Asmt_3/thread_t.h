@@ -15,12 +15,14 @@
 typedef struct thread{
   ucontext_t *ucp;
   int pri;
+  int id;
   bool free_stack;
 } thread_t;
 
 void thread_init(thread_t *t,
                  ucontext_t *ucp,
-                 int pri);
+                 int pri,
+                 int id);
 
 // Data delete method for use with linked list
 void thread_data_delete(void *item);

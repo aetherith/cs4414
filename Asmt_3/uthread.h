@@ -11,8 +11,11 @@
 #include "list_t.h"
 #include "thread_t.h"
 
-list_t thread_queue;
-int thread_id;
+static list_t thread_queue;
+static int thread_id;
+
+static ucontext_t handler;
+static char handler_stack[1048576];
 
 // Initialize the thread queue
 void uthread_init();
@@ -32,7 +35,7 @@ void uthread_yield();
 // queue to begin running.
 void uthread_exit();
 
-// Delete and free the entire thread queue
-void uthread_dinit();
+// Function that handles freeing thread objects
+void uthread_handler();
 
 #endif

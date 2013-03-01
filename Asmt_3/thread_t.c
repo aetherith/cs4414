@@ -7,30 +7,16 @@
 #include "thread_t.h"
 
 void thread_init(thread_t *t,
-                 ucontext_t *ucp,
                  int pri, int id){
-  t->ucp = ucp;
   t->pri = pri;
   t->id = id;
-  t->free_stack = true;
 };
 
 // Clean up the thread object when it is deleted from the linked list
 void thread_data_delete(void *item){
   thread_t *t = (thread_t*)(((list_item_t*)item)->data);
-  // If the thread's stack was dynamically allocated, i.e. the thread
-  // was created using uthread_create() we must deallocate its stack space.
-  if( t->free_stack == true ) 
-    {
-      // printf("Freeing stack!\n");
-      // For some reason it doesn't seem to think that the stack was dynamically
-      // allocated.  Problem is that this memory leaks out until reclaimed by OS.
-      // free(t->ucp->uc_stack.ss_sp);
-      // printf("Stack freed!\n");
-    }
-  // Deallocate the dynamically created ucontext_t object
-  free(t->ucp);
-  // Deallocate the thread object itself
+  // Deallocate the thread object itself as the context and the stack
+  // are statically allocated in the thread struct.
   free(t);
 };
 

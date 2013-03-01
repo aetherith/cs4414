@@ -13,14 +13,14 @@
 #include "list_item_t.h"
 
 typedef struct thread{
-  ucontext_t *ucp;
+  ucontext_t ucp;
+  char ucp_stack[1048576];
   int pri;
   int id;
   bool free_stack;
 } thread_t;
 
 void thread_init(thread_t *t,
-                 ucontext_t *ucp,
                  int pri,
                  int id);
 

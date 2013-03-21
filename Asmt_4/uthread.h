@@ -37,12 +37,12 @@
 #ifndef __UTHREAD_H
 #define __UTHREAD_H
 
-typedef void (*uthread_func_t)(int val);
+typedef void (*uthread_func_t) (int val);
 
-void uthread_init(void);
-int uthread_create(uthread_func_t func,int val,int pri);
-void uthread_yield(void);
-void uthread_exit(void);
+void uthread_init (void);
+int uthread_create (uthread_func_t func, int val, int pri);
+void uthread_yield (void);
+void uthread_exit (void);
+int uthread_priority_sort(const void *key, const void *with);
 
 #endif //__UTHREAD_H
-

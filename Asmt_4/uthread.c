@@ -206,10 +206,38 @@ void
 uthread_exit (void)
 {
   /* How do I deal with removing a thread that may not be at the head? */
-  assert (tail_thread->next == head_thread);
+  //assert (tail_thread->next == head_thread);  //Not sure if I still need this.
   uthread_t *old_thread = current_thread;
-  current_thread = current_thread->next;
-  tail_thread->next = current_thread;
+  /* change to next highest priority thread */
+  if( current_thread == head_thread )
+    {
+      /* if we're executing the current highest priority thread */
+      current_thread = current_thread->next;
+      tail_thread->next = current_thread;
+      head_thread = current_thread;
+    }
+  else
+    {
+      /* otherwise, a higher priority thread has yielded and we're midway */
+      uthread_t *prev_thread = head_thread;
+      
+      /* find the thread directly before the currently running one */
+      while( prev_thread->next != current_thread )
+        prev_thread = prev_thread->next;
+      
+      if( current_thread->pri < current_thread->next->pri )
+        {
+          /* the next thread in the cycle is of a "lower" priority so we want
+           * to loop around and start executing the current head_thread
+           */
+          prev_thread->next = current_thread->next;
+          current_thread = head_thread;
+        }
+      else
+        {
+
+        }
+    }
 
 #if defined __APPLE__ || defined __FreeBSD__
   free (old_thread->stack);

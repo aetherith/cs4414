@@ -99,6 +99,7 @@ free_stack (void)
 void
 uthread_init (void)
 {
+  printf("== uthread_init() ==\n");
   if (current_thread)
     {
       return;
@@ -117,7 +118,7 @@ uthread_init (void)
   tail_thread = current_thread = main_thread;
 
   /* set calling thread's priority to the lowest available */
-  main_thread->pri = 0;
+  main_thread->pri = 9;
 
   /* increment the number of live uthreads */
   live_uthreads++;
@@ -135,11 +136,13 @@ uthread_init (void)
 
   makecontext (&cleanup_context, free_stack, 0);
 #endif
+  printf("!= uthread_init() =!\n");
 }
 
 int
 uthread_create (uthread_func_t func, int val, int pri)
 {
+  printf("== uthread_create() ==\n");
   uthread_t *new_thread = (uthread_t *) malloc (sizeof (uthread_t));
 
   if (getcontext (&new_thread->context) < 0)
@@ -164,6 +167,9 @@ uthread_create (uthread_func_t func, int val, int pri)
   uthread_t **thread_buf = malloc( live_uthreads * sizeof(uthread_t*) );
   uthread_t *thread_copy_p = current_thread->next;
   int thread_buf_pos = 0;
+  
+  printf("= Copy thread pointers into array =\n");
+
   while( thread_copy_p != current_thread )
     {
       thread_buf[thread_buf_pos] = thread_copy_p;
@@ -172,19 +178,34 @@ uthread_create (uthread_func_t func, int val, int pri)
   thread_buf[thread_buf_pos] = current_thread;
   thread_buf[thread_buf_pos + 1] = new_thread;
 
+  printf("! Copy thread pointers into array !\n= Quicksort =\n");
+
   qsort(thread_buf, live_uthreads, sizeof(uthread_t*), uthread_priority_sort);
+
+  printf("! Quicksort !\n");
+
   /* iterate through the array and retie next pointers */
   /* highest priority thread ends up in position 0 of the thread buffer */
+  
+  printf("= Retie pointers =\n");
+
   head_thread = thread_buf[0];
   for( thread_buf_pos = 1; thread_buf_pos < live_uthreads; thread_buf_pos++ )
+    {
+      printf("Linking %i to %i.\n", thread_buf_pos - 1, thread_buf_pos);
       thread_buf[thread_buf_pos - 1]->next = thread_buf[thread_buf_pos];
+      printf("Linked %i to %i.\n", thread_buf_pos - 1, thread_buf_pos);
+    }
   /* close the circle of threads back on itself */
   thread_buf[thread_buf_pos]->next = head_thread;
   tail_thread = thread_buf[thread_buf_pos];
 
+  printf("! Retie pointers !\n");
+
   /* test that the circle is closed */
   assert (tail_thread->next == head_thread);
 
+  printf("!= uthread_create() =!\n");
   return ++uthread_id;
 }
 
@@ -205,7 +226,6 @@ uthread_yield (void)
 void
 uthread_exit (void)
 {
-  /* How do I deal with removing a thread that may not be at the head? */
   //assert (tail_thread->next == head_thread);  //Not sure if I still need this.
   uthread_t *old_thread = current_thread;
   /* change to next highest priority thread */
@@ -235,7 +255,10 @@ uthread_exit (void)
         }
       else
         {
-
+          /* the next thread is of equal or higher priority to the current one.
+           * switch and begin executing it.
+           */
+          
         }
     }
 
@@ -251,4 +274,9 @@ uthread_exit (void)
   retired_thread = old_thread;
   setcontext (&cleanup_context);
 #endif
+}
+
+int uthread_priority_sort(const void *key, const void *with)
+{
+  return -1;
 }

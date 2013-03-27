@@ -43,6 +43,7 @@
 #include <assert.h>
 #include <ucontext.h>
 #include <signal.h>
+#include <sys/time.h>
 
 #include "uthread.h"
 
@@ -136,6 +137,13 @@ uthread_init (void)
 
   makecontext (&cleanup_context, free_stack, 0);
 #endif
+
+  /* since timers are process wide, here is where we set one up and create
+   * the signal handler to deal with when it goes off.
+   */
+
+  
+
   printf("!= uthread_init() =!\n");
 }
 
@@ -168,42 +176,51 @@ uthread_create (uthread_func_t func, int val, int pri)
   uthread_t *thread_copy_p = current_thread->next;
   int thread_buf_pos = 0;
   
-  printf("= Copy thread pointers into array =\n");
+  //printf("= Copy thread pointers into array =\n");
 
   while( thread_copy_p != current_thread )
     {
       thread_buf[thread_buf_pos] = thread_copy_p;
+      thread_copy_p = thread_copy_p->next;
       thread_buf_pos++;
     }
   thread_buf[thread_buf_pos] = current_thread;
   thread_buf[thread_buf_pos + 1] = new_thread;
 
-  printf("! Copy thread pointers into array !\n= Quicksort =\n");
+  //printf("! Copy thread pointers into array !\n= Quicksort =\n");
 
   qsort(thread_buf, live_uthreads, sizeof(uthread_t*), uthread_priority_sort);
 
-  printf("! Quicksort !\n");
+  //printf("! Quicksort !\n");
 
   /* iterate through the array and retie next pointers */
   /* highest priority thread ends up in position 0 of the thread buffer */
   
-  printf("= Retie pointers =\n");
+  //printf("= Retie pointers =\n");
 
   head_thread = thread_buf[0];
   for( thread_buf_pos = 1; thread_buf_pos < live_uthreads; thread_buf_pos++ )
     {
-      printf("Linking %i to %i.\n", thread_buf_pos - 1, thread_buf_pos);
       thread_buf[thread_buf_pos - 1]->next = thread_buf[thread_buf_pos];
-      printf("Linked %i to %i.\n", thread_buf_pos - 1, thread_buf_pos);
     }
   /* close the circle of threads back on itself */
-  thread_buf[thread_buf_pos]->next = head_thread;
-  tail_thread = thread_buf[thread_buf_pos];
+  thread_buf[thread_buf_pos - 1]->next = head_thread;
+  tail_thread = thread_buf[thread_buf_pos - 1];
 
-  printf("! Retie pointers !\n");
+  //printf("! Retie pointers !\n");
 
   /* test that the circle is closed */
   assert (tail_thread->next == head_thread);
+
+  /* print out the run queue in order */
+  uthread_t* thread_print_p = head_thread;
+  printf("HEAD\n");
+  while( thread_print_p != tail_thread )
+    {
+      printf("Pri: %i\n", thread_print_p->pri);
+      thread_print_p = thread_print_p->next;
+    }
+  printf("Pri: %i\nTAIL\n", thread_print_p->pri);
 
   printf("!= uthread_create() =!\n");
   return ++uthread_id;
@@ -212,26 +229,53 @@ uthread_create (uthread_func_t func, int val, int pri)
 void
 uthread_yield (void)
 {
+  printf("== uthread_yield() ==\n");
+
   if (current_thread == current_thread->next)
     {
+      printf("!= uthread_yield() - No Contest =!\n");
       return;
     }
 
-  tail_thread = current_thread;
-  current_thread = current_thread->next;
+  uthread_t *old_thread = current_thread;
+  if( old_thread->pri < old_thread->next->pri )
+    {
+      if( current_thread == head_thread )
+        {
+          printf("!= uthread_yield() - Highest available thread =!\n");
+          return;
+        }
 
-  swapcontext (&tail_thread->context, &current_thread->context);
+      else
+        {
+          printf("= Looping to head within priority class %i =\n",
+                 current_thread->pri);
+          current_thread = head_thread;
+        }
+    }
+  else
+    {
+      printf("= Yielding from priority %i to priority %i =\n",
+             old_thread->pri, old_thread->next->pri);
+      current_thread = old_thread->next;
+    }
+  printf("!= uthread_yield() =!\n");
+
+  swapcontext (&old_thread->context, &current_thread->context);
 }
 
 void
 uthread_exit (void)
 {
-  //assert (tail_thread->next == head_thread);  //Not sure if I still need this.
+  printf("== uthread_exit() ==\n");
   uthread_t *old_thread = current_thread;
+
   /* change to next highest priority thread */
   if( current_thread == head_thread )
     {
       /* if we're executing the current highest priority thread */
+      printf("= Exiting the head thread =\n");
+
       current_thread = current_thread->next;
       tail_thread->next = current_thread;
       head_thread = current_thread;
@@ -250,6 +294,8 @@ uthread_exit (void)
           /* the next thread in the cycle is of a "lower" priority so we want
            * to loop around and start executing the current head_thread
            */
+          printf("= Exiting at end of priority class =\n");
+
           prev_thread->next = current_thread->next;
           current_thread = head_thread;
         }
@@ -258,10 +304,21 @@ uthread_exit (void)
           /* the next thread is of equal or higher priority to the current one.
            * switch and begin executing it.
            */
-          
+          if( current_thread == tail_thread )
+            {
+              /* if we're at the tail patch things up with those pointers */
+              tail_thread = prev_thread;
+              prev_thread->next = head_thread;
+            }
+          else
+            {
+              current_thread = current_thread->next;
+              prev_thread->next = current_thread;
+            }
         }
     }
 
+  printf("!= uthread_exit() =!\n");
 #if defined __APPLE__ || defined __FreeBSD__
   free (old_thread->stack);
   free (old_thread);
@@ -278,5 +335,10 @@ uthread_exit (void)
 
 int uthread_priority_sort(const void *key, const void *with)
 {
-  return -1;
+  uthread_t *arg1 = *((uthread_t**)key);
+  uthread_t *arg2 = *((uthread_t**)with);
+  printf("Arg1: %i VS Arg2: %i\n", arg1->pri, arg2->pri);
+  if( arg1->pri < arg2->pri ) return -1;
+  if( arg1->pri > arg2->pri ) return 1;
+  return 0;
 }

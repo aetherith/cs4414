@@ -145,7 +145,7 @@ uthread_init (void)
 
   /* since timers are process wide, here is where we set one up */
   yield_timer.it_interval.tv_sec = 0;
-  yield_timer.it_interval.tv_usec = 0;
+  yield_timer.it_interval.tv_usec = TIME_SLICE_USEC;
   yield_timer.it_value.tv_sec = 0;
   yield_timer.it_value.tv_usec = TIME_SLICE_USEC;
   if( setitimer(ITIMER_VIRTUAL, &yield_timer, &old_v_timer) < 0 )

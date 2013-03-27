@@ -71,6 +71,11 @@ static uthread_t *tail_thread = NULL;
 static uthread_t *head_thread = NULL;
 static int uthread_id = 0;
 static int live_uthreads = 0;
+static struct itimerval yield_timer;
+static struct itimerval old_v_timer;
+static int TIME_SLICE_USEC = 10;
+static struct sigaction yield_action;
+static struct sigaction old_sig_action;
 
 /**
  * on OS X and FreeBSD, you can free current context's stack
@@ -138,11 +143,26 @@ uthread_init (void)
   makecontext (&cleanup_context, free_stack, 0);
 #endif
 
-  /* since timers are process wide, here is where we set one up and create
-   * the signal handler to deal with when it goes off.
-   */
+  /* since timers are process wide, here is where we set one up */
+  yield_timer.it_interval.tv_sec = 0;
+  yield_timer.it_interval.tv_usec = 0;
+  yield_timer.it_value.tv_sec = 0;
+  yield_timer.it_value.tv_usec = TIME_SLICE_USEC;
+  if( setitimer(ITIMER_VIRTUAL, &yield_timer, &old_v_timer) < 0 )
+    {
+      perror("timer");
+      exit(-1);
+    }
 
-  
+  /* now to configure a signal handler for SIGVTALRM */
+  yield_action.sa_handler = &uthread_yield_handler;
+  sigemptyset( &yield_action.sa_mask );
+  yield_action.sa_flags = 0;
+  if( sigaction(SIGVTALRM, &yield_action, &old_sig_action) < 0 )
+    {
+      perror("sigaction");
+      exit(-1);
+    }
 
   printf("!= uthread_init() =!\n");
 }
@@ -212,7 +232,7 @@ uthread_create (uthread_func_t func, int val, int pri)
   /* test that the circle is closed */
   assert (tail_thread->next == head_thread);
 
-  /* print out the run queue in order */
+  /* print out the run queue in order
   uthread_t* thread_print_p = head_thread;
   printf("HEAD\n");
   while( thread_print_p != tail_thread )
@@ -221,7 +241,7 @@ uthread_create (uthread_func_t func, int val, int pri)
       thread_print_p = thread_print_p->next;
     }
   printf("Pri: %i\nTAIL\n", thread_print_p->pri);
-
+  */
   printf("!= uthread_create() =!\n");
   return ++uthread_id;
 }
@@ -271,7 +291,7 @@ uthread_exit (void)
   uthread_t *old_thread = current_thread;
 
   /* change to next highest priority thread */
-  if( current_thread == head_thread )
+  if( old_thread == head_thread )
     {
       /* if we're executing the current highest priority thread */
       printf("= Exiting the head thread =\n");
@@ -286,17 +306,17 @@ uthread_exit (void)
       uthread_t *prev_thread = head_thread;
       
       /* find the thread directly before the currently running one */
-      while( prev_thread->next != current_thread )
+      while( prev_thread->next != old_thread )
         prev_thread = prev_thread->next;
       
-      if( current_thread->pri < current_thread->next->pri )
+      if( old_thread->pri < old_thread->next->pri )
         {
           /* the next thread in the cycle is of a "lower" priority so we want
            * to loop around and start executing the current head_thread
            */
           printf("= Exiting at end of priority class =\n");
 
-          prev_thread->next = current_thread->next;
+          prev_thread->next = old_thread->next;
           current_thread = head_thread;
         }
       else
@@ -304,11 +324,13 @@ uthread_exit (void)
           /* the next thread is of equal or higher priority to the current one.
            * switch and begin executing it.
            */
-          if( current_thread == tail_thread )
+          if( old_thread == tail_thread )
             {
               /* if we're at the tail patch things up with those pointers */
+              printf("= Exiting the tail thread =\n");
               tail_thread = prev_thread;
               prev_thread->next = head_thread;
+              current_thread = head_thread;
             }
           else
             {
@@ -337,8 +359,14 @@ int uthread_priority_sort(const void *key, const void *with)
 {
   uthread_t *arg1 = *((uthread_t**)key);
   uthread_t *arg2 = *((uthread_t**)with);
-  printf("Arg1: %i VS Arg2: %i\n", arg1->pri, arg2->pri);
+  //printf("Arg1: %i VS Arg2: %i\n", arg1->pri, arg2->pri);
   if( arg1->pri < arg2->pri ) return -1;
   if( arg1->pri > arg2->pri ) return 1;
   return 0;
+}
+
+void uthread_yield_handler( int signum )
+{
+  printf("== Timeout yield ==\n");
+  uthread_yield();
 }

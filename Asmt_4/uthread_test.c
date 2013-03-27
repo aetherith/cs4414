@@ -13,17 +13,19 @@ main ()
 
   uthread_init ();
 
-  uthread_create (threadFunc, 1, 1);
-  uthread_create (threadFunc, 2, 2);
+  uthread_create (threadFunc, 1, 0);
+  uthread_create (threadFunc, 2, 0);
   uthread_create (threadFunc, 3, 0);
   uthread_create (threadFunc, 4, 0);
-  uthread_create (threadFunc, 5, 5);
-  uthread_create (threadFunc, 6, 3);
-  uthread_create (threadFunc, 7, 3);
-  uthread_create (threadFunc, 8, 2);
+  //uthread_create (threadFunc, 5, 5);
+  //uthread_create (threadFunc, 6, 3);
+  //uthread_create (threadFunc, 7, 3);
+  //uthread_create (threadFunc, 8, 2);
 
   // uncomment to test uthread_exit() on main earlier than others
-  // uthread_exit();
+  //uthread_exit();
+
+  while( 1 ) printf("Waiting for interrupt.\n");
 
   for (i = 0; i < 10; i++)
     {
@@ -44,10 +46,16 @@ threadFunc (int val)
 {
   int i, j;
 
+  //if( val%2 == 0 ) uthread_exit();
+
   for (i = 0; i < 5; i++)
     {
       printf ("Thread: %d Count: %d\n", val, i);
-      //for(j=0;j<10000000;j++);
+      for(j=0;j<10000000;j++)
+        {
+          if( j%1000000 == 0 ) printf("%i*", val);
+        }
+      printf("\n");
       uthread_yield ();
     }
   uthread_exit ();

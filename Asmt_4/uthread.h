@@ -34,6 +34,13 @@
  *
  */
 
+/**
+ * Thomas Foulds (tcf9bj)
+ * 03-27-2013
+ * CS4414
+ * Assignment 4
+ */
+
 #ifndef __UTHREAD_H
 #define __UTHREAD_H
 
@@ -45,5 +52,12 @@ void uthread_yield (void);
 void uthread_exit (void);
 int uthread_priority_sort(const void *key, const void *with);
 void uthread_yield_handler(int signum);
+
+/* mutex methods */
+void uthread_mutex_init(uthread_mutex_t *lockVar);
+void uthread_mutex_lock(uthread_mutex_t *lockVar);
+void uthread_mutex_unlock(uthread_mutex_t *lockVar);
+void uthread_mutex_destroy(uthread_mutex_t *lockVar);
+void uthread_wait_record_init(uthread_wait_record_t *record);
 
 #endif //__UTHREAD_H

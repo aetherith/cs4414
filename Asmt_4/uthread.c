@@ -34,6 +34,13 @@
  *
  */
 
+/**
+ * Thomas Foulds (tcf9bj)
+ * 03-27-2013
+ * CS4414
+ * Assignment 4
+ */
+
 #ifdef __APPLE__
 #define _XOPEN_SOURCE		// suppress warning for ucontext.h (deprecated)
 #endif
@@ -66,13 +73,28 @@ typedef struct uthread
   struct uthread *next;
 } uthread_t;
 
+typedef struct uthread_wait_record
+{
+  uthread_t *thread;
+  uthread_wait_record_t *next;
+
+} uthread_wait_record_t;
+
+typedef uthread_mutex
+{
+  uthread_t *locking_uthread;
+  int wait_queue_length;
+  /* head of a single link list of waiting threads */
+  uthread_wait_record_t *wait_queue_head;
+  uthread_wait_record_t *wait_queue_tail;
+} uthread_mutex_t;
+
 static uthread_t *current_thread = NULL;
 static uthread_t *tail_thread = NULL;
 static uthread_t *head_thread = NULL;
 static int uthread_id = 0;
 static int live_uthreads = 0;
 static struct itimerval yield_timer;
-static struct itimerval old_v_timer;
 static int TIME_SLICE_USEC = 10;
 static struct sigaction yield_action;
 static struct sigaction old_sig_action;
@@ -148,7 +170,7 @@ uthread_init (void)
   yield_timer.it_interval.tv_usec = TIME_SLICE_USEC;
   yield_timer.it_value.tv_sec = 0;
   yield_timer.it_value.tv_usec = TIME_SLICE_USEC;
-  if( setitimer(ITIMER_VIRTUAL, &yield_timer, &old_v_timer) < 0 )
+  if( setitimer(ITIMER_VIRTUAL, &yield_timer, NULL) < 0 )
     {
       perror("timer");
       exit(-1);
@@ -158,7 +180,7 @@ uthread_init (void)
   yield_action.sa_handler = &uthread_yield_handler;
   sigemptyset( &yield_action.sa_mask );
   yield_action.sa_flags = 0;
-  if( sigaction(SIGVTALRM, &yield_action, &old_sig_action) < 0 )
+  if( sigaction(SIGVTALRM, &yield_action, NULL) < 0 )
     {
       perror("sigaction");
       exit(-1);
@@ -242,6 +264,10 @@ uthread_create (uthread_func_t func, int val, int pri)
     }
   printf("Pri: %i\nTAIL\n", thread_print_p->pri);
   */
+
+  /* free the thread buffer as we don't need it anymore */
+  free(thread_buf);
+
   printf("!= uthread_create() =!\n");
   return ++uthread_id;
 }
@@ -369,4 +395,66 @@ void uthread_yield_handler( int signum )
 {
   printf("== Timeout yield ==\n");
   uthread_yield();
+}
+
+void uthread_mutex_init(uthread_mutex_t *lockVar)
+{
+  lockVar->locking_uthread = NULL;
+  lockVar->wait_queue_length = 0;
+  lockVar->wait_queue_head = NULL;
+  lockVar->wait_queue_tail = NULL;
+}
+
+void uthread_mutex_lock(uthread_mutex_t *lockVar)
+{
+  sigset_t mask, orig_mask;
+  sigfillset(&mask);
+  /* block all signals */
+  if( sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0 )
+    {
+      perror("block signals");
+      exit(-1);
+    }
+  uthread_wait_record_t *new_wait = malloc(sizeof(uthread_wait_record_t));
+  uthread_wait_record_init(new_wait);
+  lockVar->wait_queue_length++;
+  /* if there is only one thread trying to lock this mutex */
+  if( lockVar->wait_queue_length == 1 )
+    {
+      lockVar->wait_queue_head = new_wait;
+      lockVar->wait_queue_tail = new_wait;
+      lockVar->locking_thread = new_wait->thread;
+    }
+  else
+    {
+
+    }
+  /* reset the signal mask to the original */
+  if( sigprocmask(SIG_SETMASK, &orig_mask, NULL) < 0 )
+    {
+      perror("unblock signals");
+      exit(-1);
+    }
+  while(current_thread != lockVar->locking_uthread) uthread_yield();
+}
+
+void uthread_mutex_unlock(uthread_mutex_t *lockVar)
+{
+
+}
+
+void uthread_mutex_destroy(uthread_mutex_t *lockVar)
+{
+
+}
+
+void uthread_wait_record_init(uthread_wait_record_t *record)
+{
+  record->thread = current_thread;
+  record->next = NULL:
+}
+
+int uthread_wait_record_priority_sort(const void *key, const void *with)
+{
+  return -1;
 }

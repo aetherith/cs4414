@@ -1,6 +1,0 @@
-* For priority sorting:
-  * On create, create an array of all currently living threads' pointers.  Quicksort this array based on priority.
-  * Relink the circular buffer based on position and set a next_thread pointer to the thread with the highest priority (position 0 in the array).
-  * We'd rather do this on create than on switch because switches are much much more frequent and we don't want to waste time on them.  Create's are going to be comparatively infrequent.
-  * It also lets us easily implement the required RR schedualing for same priority threads.  If thread->next has a lower (less important) priority than the current thread we instead return to the pointer in array position 0.
-    * This might require a thread_queue_head variable to aid in the jump back.

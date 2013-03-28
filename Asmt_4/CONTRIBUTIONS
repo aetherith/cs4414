@@ -1,0 +1,20 @@
+Thomas Foulds (tcf9bj):
+* Made modifications to implement specification to:
+  * uthread_init()
+  * uthread_create()
+  * uthread_exit()
+  * uthread_yield()
+* Implemented:
+  * uthread_priority_sort()
+  * uthread_yield_handler()
+  * uthread_mutex_init()
+  * uthread_mutex_lock()
+  * uthead_mutex_unlock()
+  * uthread_wait_recor_init()
+  * uthread_wait_record_priority_sort()
+* Wrote report descriptions for threading elements of assignment.
+
+Amanda Ray (ajr2fu):
+* Implemented:
+  * uthread_mutex_destroy()
+* Wrote report descriptions for mutex elements of assignment.

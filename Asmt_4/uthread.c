@@ -453,12 +453,11 @@ void uthread_mutex_unlock(uthread_mutex_t *lockVar)
 void uthread_mutex_destroy(uthread_mutex_t *lockVar)
 {
   uthread_wait_record_t *free_p = lockVar->wait_queue_head;
-  uthread_wait_record_t *next_p = NULL;
-  while( free_p != NULL )
+  while( lockVar->wait_queue_head != NULL )
     {
-      next_p = free_p->next;
+      lockVar->wait_queue_head = lockVar->wait_queue_head->next;
       free(free_p);
-      free_p = next_p;
+      free_p = lockVar->wait_queue_head;
     }
 }
 

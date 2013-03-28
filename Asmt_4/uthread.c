@@ -94,7 +94,7 @@ free_stack (void)
 void
 uthread_init (void)
 {
-  printf("== uthread_init() ==\n");
+  //printf("== uthread_init() ==\n");
   if (current_thread)
     {
       return;
@@ -153,13 +153,13 @@ uthread_init (void)
       exit(-1);
     }
 
-  printf("!= uthread_init() =!\n");
+  //printf("!= uthread_init() =!\n");
 }
 
 int
 uthread_create (uthread_func_t func, int val, int pri)
 {
-  printf("== uthread_create() ==\n");
+  //printf("== uthread_create() ==\n");
   uthread_t *new_thread = (uthread_t *) malloc (sizeof (uthread_t));
 
   if (getcontext (&new_thread->context) < 0)
@@ -184,8 +184,6 @@ uthread_create (uthread_func_t func, int val, int pri)
   uthread_t **thread_buf = malloc( live_uthreads * sizeof(uthread_t*) );
   uthread_t *thread_copy_p = current_thread->next;
   int thread_buf_pos = 0;
-  
-  //printf("= Copy thread pointers into array =\n");
 
   while( thread_copy_p != current_thread )
     {
@@ -196,17 +194,11 @@ uthread_create (uthread_func_t func, int val, int pri)
   thread_buf[thread_buf_pos] = current_thread;
   thread_buf[thread_buf_pos + 1] = new_thread;
 
-  //printf("! Copy thread pointers into array !\n= Quicksort =\n");
-
   qsort(thread_buf, live_uthreads, sizeof(uthread_t*), uthread_priority_sort);
-
-  //printf("! Quicksort !\n");
 
   /* iterate through the array and retie next pointers */
   /* highest priority thread ends up in position 0 of the thread buffer */
   
-  //printf("= Retie pointers =\n");
-
   head_thread = thread_buf[0];
   for( thread_buf_pos = 1; thread_buf_pos < live_uthreads; thread_buf_pos++ )
     {
@@ -216,63 +208,35 @@ uthread_create (uthread_func_t func, int val, int pri)
   thread_buf[thread_buf_pos - 1]->next = head_thread;
   tail_thread = thread_buf[thread_buf_pos - 1];
 
-  //printf("! Retie pointers !\n");
-
   /* test that the circle is closed */
   assert (tail_thread->next == head_thread);
-
-  /* print out the run queue in order
-  uthread_t* thread_print_p = head_thread;
-  printf("HEAD\n");
-  while( thread_print_p != tail_thread )
-    {
-      printf("Pri: %i\n", thread_print_p->pri);
-      thread_print_p = thread_print_p->next;
-    }
-  printf("Pri: %i\nTAIL\n", thread_print_p->pri);
-  */
 
   /* free the thread buffer as we don't need it anymore */
   free(thread_buf);
 
-  printf("!= uthread_create() =!\n");
+  //printf("!= uthread_create() =!\n");
   return ++uthread_id;
 }
 
 void
 uthread_yield (void)
 {
-  printf("== uthread_yield() ==\n");
+  //printf("== uthread_yield() ==\n");
 
   if (current_thread == current_thread->next)
-    {
-      printf("!= uthread_yield() - No Contest =!\n");
       return;
-    }
 
   uthread_t *old_thread = current_thread;
   if( old_thread->pri < old_thread->next->pri )
     {
       if( current_thread == head_thread )
-        {
-          printf("!= uthread_yield() - Highest available thread =!\n");
           return;
-        }
-
       else
-        {
-          printf("= Looping to head within priority class %i =\n",
-                 current_thread->pri);
           current_thread = head_thread;
-        }
     }
   else
-    {
-      printf("= Yielding from priority %i to priority %i =\n",
-             old_thread->pri, old_thread->next->pri);
       current_thread = old_thread->next;
-    }
-  printf("!= uthread_yield() =!\n");
+  //printf("!= uthread_yield() =!\n");
 
   swapcontext (&old_thread->context, &current_thread->context);
 }
@@ -280,15 +244,13 @@ uthread_yield (void)
 void
 uthread_exit (void)
 {
-  printf("== uthread_exit() ==\n");
+  //printf("== uthread_exit() ==\n");
   uthread_t *old_thread = current_thread;
 
   /* change to next highest priority thread */
   if( old_thread == head_thread )
     {
       /* if we're executing the current highest priority thread */
-      printf("= Exiting the head thread =\n");
-
       current_thread = current_thread->next;
       tail_thread->next = current_thread;
       head_thread = current_thread;
@@ -307,8 +269,6 @@ uthread_exit (void)
           /* the next thread in the cycle is of a "lower" priority so we want
            * to loop around and start executing the current head_thread
            */
-          printf("= Exiting at end of priority class =\n");
-
           prev_thread->next = old_thread->next;
           current_thread = head_thread;
         }
@@ -320,7 +280,6 @@ uthread_exit (void)
           if( old_thread == tail_thread )
             {
               /* if we're at the tail patch things up with those pointers */
-              printf("= Exiting the tail thread =\n");
               tail_thread = prev_thread;
               prev_thread->next = head_thread;
               current_thread = head_thread;
@@ -333,7 +292,7 @@ uthread_exit (void)
         }
     }
 
-  printf("!= uthread_exit() =!\n");
+  //printf("!= uthread_exit() =!\n");
 #if defined __APPLE__ || defined __FreeBSD__
   free (old_thread->stack);
   free (old_thread);
@@ -352,7 +311,6 @@ int uthread_priority_sort(const void *key, const void *with)
 {
   uthread_t *arg1 = *((uthread_t**)key);
   uthread_t *arg2 = *((uthread_t**)with);
-  //printf("Arg1: %i VS Arg2: %i\n", arg1->pri, arg2->pri);
   if( arg1->pri < arg2->pri ) return -1;
   if( arg1->pri > arg2->pri ) return 1;
   return 0;
@@ -360,20 +318,22 @@ int uthread_priority_sort(const void *key, const void *with)
 
 void uthread_yield_handler( int signum )
 {
-  printf("== Timeout yield ==\n");
   uthread_yield();
 }
 
 void uthread_mutex_init(uthread_mutex_t *lockVar)
 {
+  //printf("== uthread_mutex_init() ==\n");
   lockVar->locking_thread = NULL;
   lockVar->wait_queue_length = 0;
   lockVar->wait_queue_head = NULL;
   lockVar->wait_queue_tail = NULL;
+  //printf("!= uthread_mutex_init() =!\n");
 }
 
 void uthread_mutex_lock(uthread_mutex_t *lockVar)
 {
+  //printf("== uthread_mutex_lock ==\n");
   sigset_t mask, orig_mask;
   sigfillset(&mask);
   /* block all signals */
@@ -382,9 +342,11 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar)
       perror("block signals");
       exit(-1);
     }
+
   uthread_wait_record_t *new_wait = malloc(sizeof(uthread_wait_record_t));
   uthread_wait_record_init(new_wait);
   lockVar->wait_queue_length++;
+
   /* if there is only one thread trying to lock this mutex */
   if( lockVar->wait_queue_length == 1 )
     {
@@ -395,6 +357,29 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar)
   else
     {
       /* insert new wait record and sort */
+      uthread_wait_record_t **wait_buf = malloc(lockVar->wait_queue_length *
+                                                sizeof(uthread_wait_record_t*));
+      uthread_wait_record_t *copy_p = lockVar->wait_queue_head;
+      int wait_buf_pos = 0;
+      while( copy_p != NULL )
+        {
+          wait_buf[wait_buf_pos] = copy_p;
+          copy_p = copy_p->next;
+          wait_buf_pos++;
+        }
+      wait_buf[wait_buf_pos] = new_wait;
+      qsort(wait_buf, lockVar->wait_queue_length, sizeof(uthread_wait_record_t*),
+            uthread_wait_record_priority_sort);
+      /* reset the pointers for head and tail */
+      lockVar->wait_queue_head = wait_buf[0];
+      lockVar->wait_queue_tail = wait_buf[lockVar->wait_queue_length - 1];
+      lockVar->wait_queue_tail->next = NULL;
+      for( wait_buf_pos = 1; wait_buf_pos < lockVar->wait_queue_length;
+           wait_buf_pos++)
+        {
+          wait_buf[wait_buf_pos - 1]->next = wait_buf[wait_buf_pos];
+        }
+      free(wait_buf);
     }
   /* reset the signal mask to the original */
   if( sigprocmask(SIG_SETMASK, &orig_mask, NULL) < 0 )
@@ -402,12 +387,67 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar)
       perror("unblock signals");
       exit(-1);
     }
+  //printf("!= uthread_mutex_lock() =!\n");
   while(current_thread != lockVar->locking_thread) uthread_yield();
 }
 
 void uthread_mutex_unlock(uthread_mutex_t *lockVar)
 {
-
+  //printf("== uthread_mutex_unlock() ==\n");
+  sigset_t mask, orig_mask;
+  sigfillset(&mask);
+  /* block all signals */
+  if( sigprocmask(SIG_BLOCK, &mask, &orig_mask) < 0 )
+    {
+      perror("block signals");
+      exit(-1);
+    }
+  uthread_wait_record_t *old_record;
+  if( lockVar->wait_queue_length == 1 )
+    {
+      /* if the unlocking thread is the only one waiting */
+      old_record = lockVar->wait_queue_head;
+      lockVar->wait_queue_head = NULL;
+      lockVar->wait_queue_tail = NULL;
+    }
+  else
+    {
+      if( lockVar->wait_queue_head->thread == lockVar->locking_thread )
+        {
+          /* if the unlocking thread is the head of the wait queue */
+          old_record = lockVar->wait_queue_head;
+          lockVar->wait_queue_head = old_record->next;
+        }
+      else
+        {
+          /* if our current thread is not the highest priority one in the
+           * queue.  Namely it has been sorted further down in the list.
+           */
+          uthread_wait_record_t *search_prev_p = lockVar->wait_queue_head;
+          uthread_wait_record_t *search_p = lockVar->wait_queue_head->next;
+          while( search_p->thread != lockVar->locking_thread )
+            {
+              search_prev_p = search_p;
+              search_p = search_p->next;
+              if( search_p == NULL)
+                {
+                  perror("wait record not found");
+                  exit(-1);
+                }
+            }
+          search_prev_p->next = search_p->next;
+          old_record = search_p;
+        }
+      lockVar->locking_thread = lockVar->wait_queue_head->thread;
+    }
+  free(old_record);
+  lockVar->wait_queue_length--;
+  if( sigprocmask(SIG_SETMASK, &orig_mask, NULL) < 0 )
+    {
+      perror("unblocking signals");
+      exit(-1);
+    }
+  //printf("!= uthread_mutex_unlock =!\n");
 }
 
 void uthread_mutex_destroy(uthread_mutex_t *lockVar)
@@ -417,11 +457,17 @@ void uthread_mutex_destroy(uthread_mutex_t *lockVar)
 
 void uthread_wait_record_init(uthread_wait_record_t *record)
 {
+  //printf("== uthread_wait_record_init() ==\n");
   record->thread = current_thread;
   record->next = NULL;
+  //printf("!= uthread_wait_record_init() =!\n");
 }
 
 int uthread_wait_record_priority_sort(const void *key, const void *with)
 {
-  return -1;
+  uthread_wait_record_t *arg1 = *((uthread_wait_record_t**)key);
+  uthread_wait_record_t *arg2 = *((uthread_wait_record_t**)with);
+  if( arg1->thread->pri < arg2->thread->pri ) return -1;
+  if( arg1->thread->pri > arg2->thread->pri ) return 1;
+  return 0;
 }

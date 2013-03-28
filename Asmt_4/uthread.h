@@ -94,5 +94,6 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar);
 void uthread_mutex_unlock(uthread_mutex_t *lockVar);
 void uthread_mutex_destroy(uthread_mutex_t *lockVar);
 void uthread_wait_record_init(uthread_wait_record_t *record);
+int uthread_wait_record_priority_sort(const void *key, const void *with);
 
 #endif //__UTHREAD_H

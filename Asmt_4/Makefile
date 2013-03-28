@@ -1,47 +1,18 @@
-ifeq (, $(shell which clang))
-	CC		= gcc
-else
-	CC		= clang
-endif
-LD			= $(CC)
-LDFLAGS		=
-CFLAGS		= -Wno-deprecated-declarations
-ifeq ($(shell uname), Darwin) # Apple
-	# ucontext conflicts with LLVM when optimization is enabled
-	CFLAGS	+= -O0
-else
-	CFLAGS	+= -O3
-endif
-CPPFLAGS	=
+# Thomas Foulds (tcf9bj)
+# Amanda Ray (ajr2fu)
+# 03/28/13
+# CS4414
+# Makefile for Assignment 4
 
-BIN			= uthread_test
-OBJS		= uthread_test.o uthread.o
-
-ARCHIVE		= lab3-rev-`git rev-parse HEAD | cut -c 1-8`
-
-all: uthread.o
-	cp uthread.o threadpkg1.o
-
-$(BIN): $(OBJS)
-	$(LD) $(LDFLAGS) -o $(BIN) $(OBJS)
-
-%.o: %.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+CFLAGS=-Wall
+CC=gcc $(CFLAGS)
+OFILES=uthread.o
+threadpkg2:
+	$(CC) -g -c -o threadpkg2.o uthread.c
 
 clean:
-	rm -f $(BIN)
-	rm -f *.o
-	rm -f *.tar.gz
+	rm -f *~ *.o
 
-run: $(BIN)
-	./uthread_test
+.SUFFIXES: .o .c
 
-memcheck: $(BIN)
-	valgrind ./uthread_test
-
-archive: clean
-	git archive master > $(ARCHIVE).tar
-	git log > CHANGELOG
-	tar rvf $(ARCHIVE).tar CHANGELOG
-	gzip $(ARCHIVE).tar
-
+uthread.o: uthread.c uthread.h

@@ -44,7 +44,42 @@
 #ifndef __UTHREAD_H
 #define __UTHREAD_H
 
+#include <ucontext.h>
+
 typedef void (*uthread_func_t) (int val);
+
+typedef struct uthread
+{
+  ucontext_t context;
+
+  /* context.uc_stack.ss_sp maybe stack base or stack pointer (platform dependent),
+     (e.g. on OS X, uc_stack.ss_sp is the stack pointer and thus changes as the user context progresses,
+     on most other *IX systems, uc_stack.ss_sp is the stack base and does not change)
+     thus we save the stack base here */
+  void *stack;
+
+  /* priority of the thread 0-9 */
+  int pri;
+
+  /* maintain a circular list */
+  struct uthread *next;
+} uthread_t;
+
+typedef struct uthread_wait_record
+{
+  uthread_t *thread;
+  struct uthread_wait_record *next;
+
+} uthread_wait_record_t;
+
+typedef struct uthread_mutex
+{
+  uthread_t *locking_thread;
+  int wait_queue_length;
+  /* head of a single link list of waiting threads */
+  uthread_wait_record_t *wait_queue_head;
+  uthread_wait_record_t *wait_queue_tail;
+} uthread_mutex_t;
 
 void uthread_init (void);
 int uthread_create (uthread_func_t func, int val, int pri);

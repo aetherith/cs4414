@@ -56,39 +56,6 @@
 
 #define UTHREAD_STACK_SIZE	(1 << 20)
 
-typedef struct uthread
-{
-  ucontext_t context;
-
-  /* context.uc_stack.ss_sp maybe stack base or stack pointer (platform dependent),
-     (e.g. on OS X, uc_stack.ss_sp is the stack pointer and thus changes as the user context progresses,
-     on most other *IX systems, uc_stack.ss_sp is the stack base and does not change)
-     thus we save the stack base here */
-  void *stack;
-
-  /* priority of the thread 0-9 */
-  int pri;
-
-  /* maintain a circular list */
-  struct uthread *next;
-} uthread_t;
-
-typedef struct uthread_wait_record
-{
-  uthread_t *thread;
-  uthread_wait_record_t *next;
-
-} uthread_wait_record_t;
-
-typedef uthread_mutex
-{
-  uthread_t *locking_uthread;
-  int wait_queue_length;
-  /* head of a single link list of waiting threads */
-  uthread_wait_record_t *wait_queue_head;
-  uthread_wait_record_t *wait_queue_tail;
-} uthread_mutex_t;
-
 static uthread_t *current_thread = NULL;
 static uthread_t *tail_thread = NULL;
 static uthread_t *head_thread = NULL;
@@ -399,7 +366,7 @@ void uthread_yield_handler( int signum )
 
 void uthread_mutex_init(uthread_mutex_t *lockVar)
 {
-  lockVar->locking_uthread = NULL;
+  lockVar->locking_thread = NULL;
   lockVar->wait_queue_length = 0;
   lockVar->wait_queue_head = NULL;
   lockVar->wait_queue_tail = NULL;
@@ -427,7 +394,7 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar)
     }
   else
     {
-
+      /* insert new wait record and sort */
     }
   /* reset the signal mask to the original */
   if( sigprocmask(SIG_SETMASK, &orig_mask, NULL) < 0 )
@@ -435,7 +402,7 @@ void uthread_mutex_lock(uthread_mutex_t *lockVar)
       perror("unblock signals");
       exit(-1);
     }
-  while(current_thread != lockVar->locking_uthread) uthread_yield();
+  while(current_thread != lockVar->locking_thread) uthread_yield();
 }
 
 void uthread_mutex_unlock(uthread_mutex_t *lockVar)
@@ -451,7 +418,7 @@ void uthread_mutex_destroy(uthread_mutex_t *lockVar)
 void uthread_wait_record_init(uthread_wait_record_t *record)
 {
   record->thread = current_thread;
-  record->next = NULL:
+  record->next = NULL;
 }
 
 int uthread_wait_record_priority_sort(const void *key, const void *with)

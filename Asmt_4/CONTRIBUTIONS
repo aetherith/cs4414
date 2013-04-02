@@ -12,9 +12,8 @@ Thomas Foulds (tcf9bj):
   * uthead_mutex_unlock()
   * uthread_wait_recor_init()
   * uthread_wait_record_priority_sort()
-* Wrote report descriptions for threading elements of assignment.
 
 Amanda Ray (ajr2fu):
 * Implemented:
   * uthread_mutex_destroy()
-* Wrote report descriptions for mutex elements of assignment.
+* Wrote report describing design decisions.

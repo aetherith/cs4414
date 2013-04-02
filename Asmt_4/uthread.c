@@ -36,6 +36,7 @@
 
 /**
  * Thomas Foulds (tcf9bj)
+ * Amanda Ray (ajr2fu)
  * 03-27-2013
  * CS4414
  * Assignment 4

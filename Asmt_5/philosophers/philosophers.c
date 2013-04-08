@@ -1,3 +1,13 @@
+/*
+ * Thomas Foulds (tcf9bj)
+ * Amanda Ray (ajr2fu)
+ * Sami Fekadu (sf5fw)
+ * CS4414
+ * 04/04/13
+ * Assignment 5
+ * Dining Philosophers
+ */
+
 #define _BSD_SOURCE		// usleep is from BSD
 
 #include <stdio.h>

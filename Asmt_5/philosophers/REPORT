@@ -1,0 +1,16 @@
+# Thomas Foulds (tcf9bj)
+# Amanda Ray (ajr2fu)
+# Sami Fekadu (sf5fw)
+# CS4414
+# 04/04/13
+# Assignment 5
+# Dining Philosophers
+
+Make Instructions:
+Simply execute 'make' as within the philosophers directory the philosophers build process is the default target.  The program compiles to 'philosophers'.
+
+Algorithmic Description:
+In this implementation only one philosopher may access the bowl at a time which is signified by the chopstick_manipulation_lock mutex.  When a philosopher becomes hungry they attempt to gain control of the bowl.  If they cannot they wait on a change in the canEat condition variable.  Once a philosopher has exclusive access to the bowl they pick up both chopsticks and eat while the others wait.  Once they have finished they put down their chopsticks, signal the other waiting threads, and unlock their access to the bowl.  The first waiting thread (in the FCFS wait queue) then aquires access to the bowl and the process continues.
+
+Deadlock and Starvation:
+This implementation is deadlock free because the chopstick aquisition process is atomic in nature.  There is no situation where there can be no progress as the philosophers take turns using the chopsticks and cannot aquire a single stick, thus preventing a neighbor from progressing. This implementation is also starvation free as long as philosopher eating times are finite.  The condition variable wait maintains a first come first serve queue of requesting threads so that the earliest requesting thread's needs are serviced first.

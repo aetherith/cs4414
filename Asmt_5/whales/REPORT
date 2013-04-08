@@ -1,0 +1,27 @@
+Sami Fekadu - sf5fw
+Thomas Foulds - tcf9bj
+Amanda Ray - ajr2fu
+
+Lab 5 - Whale Mating Writeup
+
+Compilation Instructions:
+call "make whales"
+then complile using ./whale #1 #2
+#1 is the number of whales/threads we want to work with
+#2 is the time
+
+
+Description of Male and Female Algorithms:
+	Our male and female algorithms operate in the same fashion; we will simply provide a description of the male algorithm here for the sake of clarity (to understand the female algorithm, simply swap the genders). 
+
+	In the case that a whale created is male (has an odd int id), we will check three separate cases. If a pair is waiting to be matched (that is to say, we have at least one male whale and one female whale waiting in the maleQ and femaleQ, respectively), we will ask this newly-created male whale to serve as the matchmaker. We increment the count of the int variable matchmaker, signal the sempahore maker_avail, and print the requested information (that is to say, the ID of the matchmaker, that the male and female whales, along with their IDs, have found mates, and that the matchmaker, and its ID, performed the required mating). We then pop the heads off of the maleQ and femaleQ (as we are to remove whales from the mating population once they have mated), and advance the queues if needed to allow any additional whales that are waiting to have an opportunity to mate.
+
+	In the case that there is not a at least one male waiting to mate, but there is at least one female waiting to mate, we want to add the newly-created male whale to maleQ so that he can mate with the waiting female whale. We indicate that the male and female whales in question have found mates, signal the sempahore male_avail, and wait for the semaphore maker_avail so that the two may be matched.
+
+	Otherwise (meaning that there we have empty male and female whale queues), we create a temporary whale item, set the value id to the id of the temp whale, set it as as the head (and tail) of the male queue, signal the semaphore male_avail, and wait on the semaphores fem_avail and maker_avail. This will indicate to future whales that there is a male ready to mate, so any subsequent males will know to wait for fem_avail to signal before they serve as a matchmaker.
+
+Justification as Deadlock-Free:
+	Our implementation is deadlock-free. Because empty queues will be filled as soon as the first relevant whale is created (meaning a maleQ will only be empty until the next male whale is created) and any subsequent whales created will be added to the list of matchmakers, we will not be waiting more than a few create actions for a successful pair to be matched and a matchmaker to assist them in their mating.
+
+Justification as Starvation-Free:
+	Our implementation is starvation-free (provided that we create at least one whale of each gender, which is exceedingly likely given our scheme of random number generation and is a potential issue that cannot be avoided given the problem definition). This is because we will always add to an empty queue such that we may create mates; if a queue is not empty, we will instead set a newly-created whale as a matchmaker. Because any gender of whale can serve as a matchmaker, we know that our solution does not depend on the creation of a certain whale in order to allow to waiting whales to mate. If a male is waiting on fem_avail to signal, so long as a female whale is eventually created (again, unavoidable), they will be able to mate. 

@@ -32,7 +32,8 @@
 #define UTF8_SIGNATURE   0xEFBBBF                 // ASCII, .html
 #define PDF_SIGNATURE    0x25504446               // .pdf
 #define PS_SIGNATURE     0x2521                   // .ps
-// Need .jpeg/.jpg
+#define JPG_SIGNATURE    0xFFD8FFE0               // .jpg
+#define JPEG_SIGNATURE   0x0                      // .jpeg
 
 struct inode { 
   int foo;      /* Unknown field */

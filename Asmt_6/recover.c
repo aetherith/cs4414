@@ -1,5 +1,5 @@
 /* Thomas Foulds (tcf9bj)
- * Amanda Ray (arj2fu)
+ * Amanda Ray (ajr2fu)
  * Sami
  * CS4414
  * 04/14/13
@@ -38,6 +38,7 @@ int main ( int argc, char* argv[] )
       exit( -1 );
     }
 
+  // Open as read only to prevent damage to the datafile
   data_file_descriptor = open( argv[3], O_RDONLY );
   if ( data_file_descriptor == -1 )
     {
@@ -64,9 +65,11 @@ int main ( int argc, char* argv[] )
 
   print_inode( (inode_t*) data_file_map );
 
+  // Unmap the file from memory
   if ( munmap( data_file_map, data_file_stat.st_size ) == -1 )
     {
       perror( "Error unmapping data file." );
+      close( data_file_descriptor );
       exit( -1 );
     }
   return 0;

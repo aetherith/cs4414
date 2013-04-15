@@ -12,10 +12,16 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/mman.h>
 
 #define N_DBLOCKS 12
 #define N_IBLOCKS 3
+
+#define BLOCK_SIZE 1024
 
 #define GIF87A_SIGNATURE 0x474946383761           // .gif
 #define GIF89A_SIGNATURE 0x474946383961           // .gif
@@ -43,6 +49,8 @@ struct inode {
   int i3block; /* Pointer to triply indirect block */
 };
 
+typedef struct inode inode_t;
 
+void print_inode ( inode_t *node );
 
 #endif

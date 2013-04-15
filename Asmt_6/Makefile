@@ -21,7 +21,7 @@ clearscr:
 	clear
 
 valgrind:
-	valgrind --tool-memcheck --leak-check=yes ./recover 1231 10578 datafile.le
+	valgrind --tool=memcheck --leak-check=yes ./recover 1231 10578 datafile.le
 
 .SUFFIXES: .o .c
 

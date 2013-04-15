@@ -1,6 +1,6 @@
 /* Thomas Foulds (tcf9bj)
  * Amanda Ray (ajr2fu)
- * Sami
+ * Sami Fekadu
  * CS4414
  * 04/14/13
  * Assignment 6

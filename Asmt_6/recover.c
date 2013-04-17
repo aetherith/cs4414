@@ -1,6 +1,6 @@
 /* Thomas Foulds (tcf9bj)
  * Amanda Ray (ajr2fu)
- * Sami
+ * Sami Fekadu (sf5fw)
  * CS4414
  * 04/14/13
  * Assignment 6
@@ -61,9 +61,8 @@ int main ( int argc, char* argv[] )
       exit( -1 );
     }
 
-  printf( "%X\n", *( (int*) data_file_map ) );
-
-  print_inode( (inode_t*) data_file_map );
+  print_inode( find_inode( data_file_map, data_file_map + data_file_stat.st_size
+                           , search_uid, search_gid) );
 
   // Unmap the file from memory
   if ( munmap( data_file_map, data_file_stat.st_size ) == -1 )
@@ -75,8 +74,31 @@ int main ( int argc, char* argv[] )
   return 0;
 };
 
+inode_t* find_inode( void *start_ptr, void *end_ptr, int uid, int gid )
+{
+  printf("== find_inode ==\n");
+  printf("Searching for:\nUID: %i\nGID: %i\n", uid, gid);
+  inode_t *search_ptr = (inode_t*) start_ptr;
+  while ( search_ptr + sizeof( inode_t ) <= end_ptr )
+    {
+      if ( search_ptr->uid == uid || search_ptr->gid == gid )
+        {
+          printf("!= find_inode - !NULL =!\n");
+          return search_ptr;
+        }
+      search_ptr += sizeof( inode_t );
+    }
+  printf("!= find_inode - NULL =!\n");
+  return NULL;
+}
+
 void print_inode ( inode_t *node )
 {
+  if ( node == NULL )
+    {
+      printf( "NULL POINTER\n" );
+      return;
+    }
   printf( "foo: %i\n", node->foo );
   printf( "nlink: %i\n", node->nlink );
   printf( "uid: %i\n", node->uid );

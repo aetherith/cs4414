@@ -1,6 +1,6 @@
 /* Thomas Foulds (tcf9bj)
- * Amanda Ray (arj2fu)
- * Sami 
+ * Amanda Ray (ajr2fu)
+ * Sami Fekadu (sf5fw)
  * CS4414
  * 04/14/13
  * Assignment 6
@@ -51,6 +51,8 @@ struct inode {
 };
 
 typedef struct inode inode_t;
+
+inode_t* find_inode( void *start_ptr, void *end_ptr, int uid, int gid );
 
 void print_inode ( inode_t *node );
 

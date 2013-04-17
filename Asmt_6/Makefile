@@ -15,13 +15,16 @@ default: $(OFILES)
 clean:
 	rm -f *~ *.o recover
 
-test: clean default clearscr valgrind
+test: clean default clearscr
+	./recover 10578 1231 datafile.le
+
+test-mem: clean default clearscr valgrind
 
 clearscr:
 	clear
 
 valgrind:
-	valgrind --tool=memcheck --leak-check=yes ./recover 1231 10578 datafile.le
+	valgrind --tool=memcheck --leak-check=yes ./recover 10578 1231 datafile.le
 
 .SUFFIXES: .o .c
 

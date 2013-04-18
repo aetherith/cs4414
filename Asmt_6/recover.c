@@ -83,7 +83,7 @@ main (int argc, char *argv[])
 
       // Check that the inode is valid
 
-      if (check_inode (f) < 0)
+      if (check_inode (f) == GEN_ERROR)
 	{
 	  perror ("INODE INVALID!");
 	}
@@ -107,16 +107,17 @@ main (int argc, char *argv[])
 	    {
 	      if (f->dblocks[dblock_pos] > 0)
 		{
-		  int bytes_copied = copy_block (data_file_map_start,
-						 output_file_ptr,
-						 f->dblocks[dblock_pos],
-						 f->size - data_copied);
-		  if (bytes_copied < 0)
+		  int bytes_copied = copy_dblock (data_file_map_start,
+                                                  output_file_ptr,
+                                                  f->dblocks[dblock_pos],
+                                                  f->size - data_copied);
+		  if ((bytes_copied == GEN_ERROR) ||
+                      (bytes_copied == BLOCK_COPY_ERROR))
 		    {
 		      perror ("Error copying direct blocks to output file.");
 		      exit (-1);
 		    }
-		  else
+		  else if (bytes_copied >= 0)
 		    {
 		      data_copied += bytes_copied;
 		    }
@@ -145,13 +146,12 @@ main (int argc, char *argv[])
 						       output_file_ptr,
 						       f->iblocks[iblock_pos],
 						       f->size - data_copied);
-		      if (bytes_copied <= 0)
+		      if (bytes_copied == BLOCK_COPY_ERROR)
 			{
-			  perror
-			    ("Error copying indirect blocks to output file.");
+			  perror("Error copying indirect blocks to output file.");
 			  exit (-1);
 			}
-		      else
+		      else if (bytes_copied >= 0)
 			{
 			  data_copied += bytes_copied;
 			}
@@ -178,9 +178,10 @@ main (int argc, char *argv[])
 	      int i1block_count =
 		unwind_iblock (data_file_map_start, f->i2block,
 			       i1block_buffer);
-	      if (i1block_count < 0)
+	      if (i1block_count == NO_POINTERS_IN_IBLOCK)
 		{
-		  perror ("Could not unwind I2BLOCK!");
+                  // I don't know if this should be fatal or not
+		  perror ("No pointers found in I2BLOCK!");
 		  exit (-1);
 		}
 	      int i1block_pos;
@@ -189,17 +190,26 @@ main (int argc, char *argv[])
 		{
 		  if (i1block_buffer[i1block_pos] > 0)
 		    {
+                      printf("Attempting to access IBLOCK: %i\n",
+                             i1block_buffer[i1block_pos]);
+                      if (i1block_buffer[i1block_pos] > data_file_stat.st_size
+                          / BLOCK_SIZE)
+                        {
+                          // If we have a a block that is wildly out of range
+                          printf("IBLOCK out of range!\n");
+                          continue;
+                        }
 		      int bytes_copied = copy_i1block (data_file_map_start,
 						       output_file_ptr,
 						       i1block_buffer
 						       [i1block_pos],
 						       f->size - data_copied);
-		      if (bytes_copied <= 0)
+		      if (bytes_copied == BLOCK_COPY_ERROR)
 			{
 			  perror ("Error copying I2 blocks to output file.");
 			  exit (-1);
 			}
-		      else
+		      else if (bytes_copied >= 0)
 			{
 			  data_copied += bytes_copied;
 			}
@@ -274,7 +284,7 @@ check_inode (inode_t * node)
 	  (node->dblocks[dblock_pos] >= max_block_number))
 	{
 	  perror ("DBLOCK OUT OF RANGE!");
-	  return -1;
+	  return GEN_ERROR;
 	}
     }
 
@@ -285,20 +295,20 @@ check_inode (inode_t * node)
 	  (node->iblocks[iblock_pos] >= max_block_number))
 	{
 	  perror ("IBLOCK OUT OF RANGE!");
-	  return -1;
+	  return GEN_ERROR;
 	}
     }
 
   if ((node->i2block < 0) || (node->i2block >= max_block_number))
     {
       perror ("I2BLOCK OUT OF RANGE!");
-      return -1;
+      return GEN_ERROR;
     }
 
   if ((node->i3block < 0) || (node->i3block >= max_block_number))
     {
       perror ("I3BLOCK OUT OF RANGE!");
-      return -1;
+      return GEN_ERROR;
     }
   return 0;
 }
@@ -334,13 +344,12 @@ print_inode (inode_t * node)
 };
 
 int
-copy_block (void *from_ptr, FILE * to_ptr, int block_num, int bytes)
+copy_dblock (void *from_ptr, FILE * to_ptr, int block_num, int bytes)
 {
-  // printf( "== copy_block ==\n" );
   if (bytes < 0)
     {
       perror ("Bytes to copy requested < 0.");
-      return -1;
+      return NEG_BYTE_REQ;
     }
 
   if (bytes > BLOCK_SIZE)
@@ -351,54 +360,52 @@ copy_block (void *from_ptr, FILE * to_ptr, int block_num, int bytes)
   if (copy_buffer == NULL)
     {
       perror ("Could not malloc copy buffer.");
-      return -1;
+      return GEN_ERROR;
     }
   memcpy (copy_buffer, from_ptr + (BLOCK_SIZE * block_num), bytes);
   if (fwrite (copy_buffer, 1, bytes, to_ptr) != bytes)
     {
       perror ("Unsuccessful block data copy!");
-      return -1;
+      return BLOCK_COPY_ERROR;
     }
   free (copy_buffer);
-  //printf( "!= copy_block =!\n" );
   return bytes;
 };
 
 int
 copy_i1block (void *from_ptr, FILE * to_ptr, int block_num, int bytes)
 {
-  //printf( "== copy_i1block ==\n" );
   if (bytes < 0)
     {
       perror ("Bytes to copy requested < 0.");
-      return -1;
+      return NEG_BYTE_REQ;
     }
   int block_buffer[BLOCK_SIZE / sizeof (int)];
   int block_count = unwind_iblock (from_ptr, block_num, block_buffer);
-  if (block_count < 0)
+  if (block_count == NO_POINTERS_IN_IBLOCK)
     {
-      perror ("Could not unwind I1BLOCK!");
-      return -1;
+      perror ("No pointers in I1BLOCK!");
+      return NO_POINTERS_IN_IBLOCK;
     }
   int block_pos;
   int data_copied = 0;
   for (block_pos = 0; block_pos < block_count; block_pos++)
     {
-      int bytes_copied = copy_block (from_ptr,
+      int bytes_copied = copy_dblock (from_ptr,
 				     to_ptr,
 				     block_buffer[block_pos],
 				     bytes - data_copied);
-      if (bytes_copied < 0)
+      if ( (bytes_copied == BLOCK_COPY_ERROR) ||
+           (bytes_copied == GEN_ERROR))
 	{
 	  perror ("Error copying direct blocks to output file.");
-	  return -1;
+	  return BLOCK_COPY_ERROR;
 	}
       else
 	{
 	  data_copied += bytes_copied;
 	}
     }
-  //printf( "!= copy_i1block =!\n" );
   return data_copied;
 };
 
@@ -409,15 +416,17 @@ unwind_iblock (void *source_ptr, int block_num, int *block_buffer)
   int block_pos;
   for (block_pos = 0; block_pos < BLOCK_SIZE / sizeof (int); block_pos++)
     {
-      if (block_buffer[block_pos] == 0)
+      if (block_buffer[block_pos] < 0)
 	{
+          printf("Block (%i): %i\n", block_pos, block_buffer[block_pos]);
 	  break;
 	}
     }
   if (block_buffer[block_pos] == 0)
     {
       // This is the case that there were no indirect blocks pointed to.
-      return -1;
+      return NO_POINTERS_IN_IBLOCK;
     }
-  return block_pos + 1;
+  printf("Returning %i block pointers.\n", block_pos);
+  return block_pos;
 };

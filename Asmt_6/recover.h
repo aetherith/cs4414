@@ -28,6 +28,10 @@
 #define NO_POINTERS_IN_IBLOCK -3
 #define BLOCK_COPY_ERROR -4
 
+#define IS_UNKNOW 0
+#define IS_DBLOCK 1
+#define IS_IBLOCK 2
+
 struct inode
 {
   int foo;			/* Unknown field */
@@ -83,4 +87,7 @@ int copy_i1block (void *from_ptr, FILE * to_ptr, int block_num, int bytes);
 // Returns NO_POINTERS_IN_IBLOCK on failure.
 int unwind_iblock (void *source_ptr, int block_num, int *block_buffer);
 
+// Takes a FILE pointer to the beginning of a file and returns a best guess
+// as to that files correct extension.
+char* guess_file_extension (FILE *source);
 #endif

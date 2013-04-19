@@ -23,18 +23,6 @@
 
 #define BLOCK_SIZE 1024
 
-#define GIF87A_SIGNATURE 0x474946383761	// .gif
-#define GIF89A_SIGNATURE 0x474946383961	// .gif
-#define TIF_SIGNATURE    0x49492A00	// .tif
-#define TIFF_SIGNATURE   0x4D4D002A	// .tiff
-#define EXE_SIGNATURE    0x4D5A	// .exe
-#define PNG_SIGNATURE    0x89504E470D0A1A0A	// .png
-#define UTF8_SIGNATURE   0xEFBBBF	// ASCII, .html
-#define PDF_SIGNATURE    0x25504446	// .pdf
-#define PS_SIGNATURE     0x2521	// .ps
-#define JPG_SIGNATURE    0xFFD8FFE0	// .jpg
-#define JPEG_SIGNATURE   0x0	// .jpeg
-
 #define GEN_ERROR -1
 #define NEG_BYTE_REQ -2
 #define NO_POINTERS_IN_IBLOCK -3

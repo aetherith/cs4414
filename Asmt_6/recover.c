@@ -330,14 +330,30 @@ print_inode (inode_t * node)
   printf ("ctime: %i\n", node->ctime);
   printf ("mtime: %i\n", node->mtime);
   printf ("atime: %i\n", node->atime);
+  printf ("dblocks: [");
   int i;
   for (i = 0; i < N_DBLOCKS; i++)
     {
-      printf ("dblock (%i): %i\n", i, node->dblocks[i]);
+      if ( i + 1 != N_DBLOCKS )
+        {
+          printf ("%i, ", node->dblocks[i]);
+        }
+      else
+        {
+          printf ("%i]\n", node->dblocks[i]);
+        }
     }
+  printf ("iblocks: [");
   for (i = 0; i < N_IBLOCKS; i++)
     {
-      printf ("iblock (%i): %i\n", i, node->iblocks[i]);
+      if ( i + 1 != N_IBLOCKS )
+        {
+          printf ("%i, ", node->iblocks[i]);
+        }
+      else
+        {
+          printf("%i]\n", node->iblocks[i]);
+        }
     }
   printf ("i2block: %i\n", node->i2block);
   printf ("i3block: %i\n", node->i3block);
@@ -418,7 +434,6 @@ unwind_iblock (void *source_ptr, int block_num, int *block_buffer)
     {
       if (block_buffer[block_pos] < 0)
 	{
-          printf("Block (%i): %i\n", block_pos, block_buffer[block_pos]);
 	  break;
 	}
     }
@@ -427,6 +442,5 @@ unwind_iblock (void *source_ptr, int block_num, int *block_buffer)
       // This is the case that there were no indirect blocks pointed to.
       return NO_POINTERS_IN_IBLOCK;
     }
-  printf("Returning %i block pointers.\n", block_pos);
   return block_pos;
 };

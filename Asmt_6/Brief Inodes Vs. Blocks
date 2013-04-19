@@ -1,0 +1,7 @@
+Inodes Vs. Blocks
+
+In I/O, inodes are contained in blocks. inode basically describes an indifidual file in a file system.
+It contains information about the file like extension, permission and such related metadata. The rest 
+of a file system are called the data blocks and this is the place where the actual data is stored. There 
+are 2048 addresseable blocks. And we can get to this from a 32 bit, which is 4 bytes so if we divide the 
+block size (8192) by 4, we get that number 2048.

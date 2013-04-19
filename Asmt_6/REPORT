@@ -16,16 +16,10 @@ unwind_iblock (void *source_ptr, int block_num, int *block_buffer) is the last m
 
 Our solution itself opens the provided data file in read-only mode to prevent corruption or excessive interaction with the file. We then map the file to memory using the mmap() call, and begin our search for inodes that fulfill our criteria. For a found inode, we will copy its filename to a buffer and open it so that we may copy data blocks into it. We iterate through our array of datablocks and use our copy_dblock method to add each block to our newly created file. In the case of indirect blocks, we unwind them to an array of the next-level up (for example, i1blocks to dblocks; i2blocks to i1blocks; i3blocks to i2blocks). We then iterate through that array and repeat - in the case if i1blocks copied to an array of dblocks, those dblocks are copied to the output file; i2blocks copied to i1blocks are then copied to an array of dblocks, etc. This is repeated until each level of indirect block supported has been unwound to its base-level data blocks and copied to the output file. We finish by unmapping the data file from memory to complete our cleanup process.
 
+If the inodes were not included in the data file, could these files still be reconstructed? Why or why not? If the inodes existed somewhere but the uid and gid were not known, could these files still be reconstructed? Why or why not?
 
-
-
-
-
-
-
-If the inodes were not included in the data file, could these files still be reconstructed? Why or why not? 
-If the inodes existed somewhere but the uid and gid were not known, could these files still be reconstructed? 
-Why or why not?
------look into "chunking" programs
+Files could still be partially reconstructed without an inode because all of the data is still contained inside the larger data file. We could search for file signatures and read in and process the data appropriately, but could potentially run into issues with block indirection if all blocks are not accounted for and any of the files use indirect blocks. Without inodes, we would be unable to identify the perpetrator, as we would lack information about the creator/owner of the file. If inodes existed but without the uid/gid file, we would be able to almost-fully reconstruct files - we would be able to handle block indirection easily, as indirect blocks are referenced in the inode struct, but we would still lack identifying information about the file owner and, thus, would similarly be unable to identify the perpetrator.
 
 How much time did you spend on this assignment, was it fun, and how could it be improved?
+
+Amanda - I spent a total of around 5 hours on this assignment. The backstory and attempts at identifying the perpetrator made it more enjoyable than simple data processing and file extraction.

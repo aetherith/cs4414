@@ -88,6 +88,7 @@ main (int argc, char *argv[])
   int file_num = 0;
   while (f != NULL)
     {
+      FILE *output_file_ptr;
       // Print found inode
       print_inode (f);
 
@@ -101,8 +102,9 @@ main (int argc, char *argv[])
 	{
 	  // This buffer should be large enough to hold any filename
 	  char output_file_name[80];
-	  sprintf (output_file_name, "%d", file_num);
-	  FILE *output_file_ptr = fopen (output_file_name, "w");
+          memset(output_file_name, 0, 80);
+          sprintf (output_file_name, "%d", file_num);
+	  output_file_ptr = fopen (output_file_name, "w");
 	  if (output_file_ptr == NULL)
 	    {
 	      perror ("Could not open output file.");
@@ -317,18 +319,49 @@ main (int argc, char *argv[])
 		      ((float) data_copied / f->size) * 100);
 	      printf ("%i/%i\n", data_copied, f->size);
 	    }
-	}
+       
       // Now that all the data is copied out into our output file we need to
       // guess the file extension by rewinding the file read pointer.
-
+      rewind(output_file_ptr);
+      char *file_ext = guess_file_extension(output_file_ptr);
+      //char *file_ext = ".dat\0";
+      printf("%s\n", file_ext);
       // Now we concatinate the numeral file name with its guessed file extension
-
+      char new_file_name[80];
+      memset(new_file_name, 0, 80);
+      strcat(new_file_name, output_file_name);
+      strcat(new_file_name, file_ext);
+      printf("%s\n", new_file_name);
       // Close our output file in preparation for the final move
-
+      fclose(output_file_ptr);
       // Fork and mv file from old file name to new file name
-
-      // Wait for mv to finish
-
+      pid_t child_pid = fork();
+      if (child_pid >= 0)
+        {
+          if (child_pid == 0)
+            {
+              // Time to execute mv!
+              int ret_val = execlp("mv", "mv", output_file_name,
+                                   new_file_name, (char*)0);
+              if (ret_val == -1)
+                {
+                  printf("Could not exec mv correctly.\n");
+                  exit( -1 );
+                }
+            }
+          else
+            {
+              int status;
+              waitpid(child_pid, &status, 0);
+            }
+        }
+      else
+        {
+          // Fork failed!
+          perror("Could not for to run mv.");
+          exit( -1 );
+        }
+        }
       // Advance the search pointer one byte into the found inode and start searching again
       search_ptr = f + 1;
       f = find_inode (search_ptr, data_file_map_end, search_uid, search_gid);

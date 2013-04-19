@@ -1,0 +1,31 @@
+Describe your algorithm for solving this problem.
+
+We defined six methods in this program, detailed below. 
+
+inode_t *find_inode (void *start_ptr, void *end_ptr, int uid, int gid) is used to find an inode structure based on a given UID or GID, depending on what is provided in the function call. The *start_ptr is where in the source file the search should begin, and the *end_ptr is the last valid address in the memory-mapped source file. This method works by searching through the file (from start_ptr to the end) in int-sized chunks, searching for blocks equal to the uid and gid. When one is found, it will be returned; if one is not found, NULL will be returned. 
+
+check_inode (inode_t * node) is used to check inode contents against known requirements to prevent bogus records by making sure all block numbers referenced are valid. In order to do this, we iterate through each dblock in a given inode to make sure that it's not greater than or equal to the maximum block number - if it is, we return an error. We repeat this for each iblock, as well as for each i2block and i3block, if these indirect blocks exist. We will return a 0 to denote that an inode and, thus, all of its associated blocks, is valid (and a GEN_ERROR if an inode is invalid).
+
+print_inode (inode_t * node) is a simple function that is designed to print the contents of an inode based on the struct provided to us in the assignment definition, as well as information about any d, i, i2, and i3 blocks that exist.
+
+copy_dblock (void *from_ptr, FILE * to_ptr, int block_num, int bytes) is writen to copy block data from a memory mapped file to a FILE pointer. We specify the source in *from_ptr, a FILE pointer to copy to in the *to_ptr, and the number of bytes to copy. We then use memcpy() to iterate through the source pointer and read the requested bytes into the specified FILE. If an invalid number of bytes or invalid source or destination pointers are specified, we will return an error; we will also return in error in case of unsuccessful copying.
+
+copy_i1block (void *from_ptr, FILE * to_ptr, int block_num, int bytes) is used to unwine an iblock and copy its component dblocks to file. We do this by utilizing the unwind_iblock method, described below, and iterating through the array of dblocks and using the copy_dblock method, described above, the move each component block to file. If no pointers are found or we are unable to copy the blocks to file, we return an error.
+
+unwind_iblock (void *source_ptr, int block_num, int *block_buffer) is the last method we define, and we use it to search through an indirect block and copy the block numbers contained therein into a block_buffer. We will then be able to use that array to eventually access the dblocks contained within and port them to a file. If we successfully unwind an indirect block, we return the number of blocks found therein; NO_POINTERS_IN_INBLOCK returned on failure.
+
+Our solution itself opens the provided data file in read-only mode to prevent corruption or excessive interaction with the file. We then map the file to memory using the mmap() call, and begin our search for inodes that fulfill our criteria. For a found inode, we will copy its filename to a buffer and open it so that we may copy data blocks into it. We iterate through our array of datablocks and use our copy_dblock method to add each block to our newly created file. In the case of indirect blocks, we unwind them to an array of the next-level up (for example, i1blocks to dblocks; i2blocks to i1blocks; i3blocks to i2blocks). We then iterate through that array and repeat - in the case if i1blocks copied to an array of dblocks, those dblocks are copied to the output file; i2blocks copied to i1blocks are then copied to an array of dblocks, etc. This is repeated until each level of indirect block supported has been unwound to its base-level data blocks and copied to the output file. We finish by unmapping the data file from memory to complete our cleanup process.
+
+
+
+
+
+
+
+
+If the inodes were not included in the data file, could these files still be reconstructed? Why or why not? 
+If the inodes existed somewhere but the uid and gid were not known, could these files still be reconstructed? 
+Why or why not?
+-----look into "chunking" programs
+
+How much time did you spend on this assignment, was it fun, and how could it be improved?

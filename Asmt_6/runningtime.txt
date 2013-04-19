@@ -1,0 +1,55 @@
+
+
+Running Time is O(N), please read below for exlanation.
+
+Given N bites in a an input file,
+
+We have all the if check statments that cost costant time so we don't count them 
+
+then we have a for loop
+  		for (dblock_pos = 0; dblock_pos < N_DBLOCKS; dblock_pos++) 
+			for (dblock_pos = 0; dblock_pos < N_IBLOCKS; dblock_pos++) 
+
+ N_DBLOCKS is 12 and N_IBLOCKS is 3 so we have
+
+12+3 so far still a constant so it does not matter in respect to N.
+
+and then we have loops
+          for (i1block_pos = 0; i1block_pos < i1block_count; i1block_pos++)
+        for (i2block_pos = 0; i2block_pos < i2block_count; i2block_pos++)
+
+for both, worse case scenario, i2block_count can go up to N so we have O(2N) right here
+
+That is it for the loops that are in main but then we have to account for the loops and instructions that are in any function that are being used in main 
+So to account for that:
+
+The find_inode gets called twice:
+   f = find_inode(search_ptr, data_file_map_end, search_uid, search_gid);
+   inode_t *f = find_inode (search_ptr, data_file_map_end, search_uid, search_gid);
+
+and in the method is a while loop
+	  while (search_ptr <= end_ptr - sizeof(int))
+
+So worst case this gives us 2 more Ns and these are not nested either so we have O(4N) so far.
+
+The method check_inode gets called once
+	      if (check_inode (f) == GEN_ERROR)
+and in check_inode, the followong loops apear again
+	for (dblock_pos = 0; dblock_pos < N_DBLOCKS; dblock_pos++) 
+			for (dblock_pos = 0; dblock_pos < N_IBLOCKS; dblock_pos++) 
+so we add 2 more Ns to our running time which makes it O(6N) so far
+
+the method print_inode also calls the above two loops once each so that makes our total so far O(8N)
+
+in Method copy_dblock, we have method
+	  memcpy (copy_buffer, from_ptr + (BLOCK_SIZE * block_num), bytes);
+that could possibly cost N so that make our total 9N
+
+We also have have 2 while loops. One actually has f searching and in there is a check_inode method being called, 
+this just adds another N to the running time. Same with the print_inode, it is called in the while loop.
+
+the unwind method also adds a constant amount of Ns to the total running time so there is not N multiplied by N, just a constant
+multiple and constants do not matter so Running time is O(N)!
+
+
+

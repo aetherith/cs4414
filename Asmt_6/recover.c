@@ -105,7 +105,7 @@ main (int argc, char *argv[])
 	  int dblock_pos;
 	  for (dblock_pos = 0; dblock_pos < N_DBLOCKS; dblock_pos++)
 	    {
-	      if (f->dblocks[dblock_pos] > 0)
+	      if (f->dblocks[dblock_pos] >= 0)
 		{
 		  int bytes_copied = copy_dblock (data_file_map_start,
                                                   output_file_ptr,
@@ -140,7 +140,7 @@ main (int argc, char *argv[])
 	      int iblock_pos;
 	      for (iblock_pos = 0; iblock_pos < N_IBLOCKS; iblock_pos++)
 		{
-		  if (f->iblocks[iblock_pos] > 0)
+		  if (f->iblocks[iblock_pos] >= 0)
 		    {
 		      int bytes_copied = copy_i1block (data_file_map_start,
 						       output_file_ptr,
@@ -265,7 +265,7 @@ if (data_copied < f->size)
           int i1block_pos;
           for (i1block_pos = 0; i1block_pos < i1block_count; i1block_pos++)
           {
-            if(i1block_buffer[i1block_pos] > 0)
+            if(i1block_buffer[i1block_pos] >= 0)
             {
               printf("Attempting to access IBLOCK: %i\n", i1block_buffer[i1block_pos]);
               if (i1block_buffer[i1block_pos] > data_file_stat.st_size / BLOCK_SIZE)

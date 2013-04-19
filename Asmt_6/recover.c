@@ -188,7 +188,7 @@ main (int argc, char *argv[])
 	      for (i1block_pos = 0; i1block_pos < i1block_count;
 		   i1block_pos++)
 		{
-		  if (i1block_buffer[i1block_pos] > 0)
+		  if (i1block_buffer[i1block_pos] >= 0)
 		    {
                       printf("Attempting to access IBLOCK: %i\n",
                              i1block_buffer[i1block_pos]);
@@ -226,13 +226,73 @@ main (int argc, char *argv[])
 		  ((float) data_copied / f->size) * 100);
 	  printf ("%i/%i\n", data_copied, f->size);
 
-	  // For the I3 block unwind it to an array of I2 blocks.  For each element
-	  // in that array unwind to an array of I1 blocks.  Copy data from I1 blocks
-	  // using copy_i1block.
-	  if (data_copied < f->size)
+	 /* For the I3 block access it, and build an array of I2 blocks it 
+	points to. Iterate through this array and for each one, access it and
+	build an array of the I1 blocks it points to. Then iterate through this
+	array and use copy_i1block. */
+	if (data_copied < f->size)
 	    {
               printf("Copying I3BLOCK.\n");
-	    }
+        int i2block_buffer[BLOCK_SIZE / sizeof (int)];
+        int i2block_count = unwind_iblock (data_file_map_start, f->i3block, i2block_buffer);
+    	// if there are no pointers found in our I3 block, exit
+       	if (i2block_count == NO_POINTERS_IN_IBLOCK)
+        	{
+        		perror ("No pointers found in I3BLOCK!");
+        		exit (-1);
+        	}
+	    	int i2block_pos;
+	    	for (i2block_pos = 0; i2block_pos < i2block_count; i2block_pos++)
+	    	{
+	    		if (i2block_buffer[i2block_pos] >= 0)
+	    		{
+	    			printf("Attempting to access I2BLOCK: %i\n", i2block_buffer[i2block_pos]);
+	    			if(i2block_buffer[i2block_pos] > data_file_stat.st.size / BLOCK_SIZE)
+	    			{
+	    				// If we have a block that is wildly out of range
+	    				printf("I2BLOCK out of range!\n");
+	    				continue;
+	    			}
+	    		i1block_count = unwind_iblock (data_file_map_start, f->i2block, i1block_buffer);
+	    		if (i1block_count == NO_POINTERS_IN_IBLOCK)
+	    		{
+	    			perror ("No pointers found in I2BLOCK!");
+	    			exit(-1);
+	    		}
+	    		for (i1block_pos = 0, i1block_pos < i1block_count; i1block_pos++)
+	    		{
+	    			if(i1block_buffer[i1block_pos] > 0)
+	    			{
+	    				printf("Attempting to access IBLOCK: %i\n", i1block_buffer[i1block_pos]);
+	    				if (i1block_buffer[i1block_pos] > data_file_stat.st_size / BLOCK_SIZE)
+{
+	printf("IBLOCK out of range!\n");
+	continue;
+}
+int bytes_copied = copy_i1block (data_file_map_start,
+	output_file_ptr,
+	i1block_buffer
+	[i1block_pos],
+	f->size - data_copied);
+	if (bytes_copied == BLOCK_COPY_ERROR)
+	{
+		perror("Error copying I3 blocks to output file");
+		exit(-1);
+	}
+	else if (bytes_copied >=0)
+	{
+		data_copied += bytes_copied;
+	}
+	    			}
+	    			else
+	    			{
+	    				printf ("No more valid I3 blocks!\n");
+	    				break;
+	    			}
+	    		}
+	    		}
+	    	}
+	    	}
 
 	  printf ("%2.2f %% copied.\n",
 		  ((float) data_copied / f->size) * 100);

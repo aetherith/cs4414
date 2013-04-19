@@ -188,7 +188,7 @@ main (int argc, char *argv[])
 	      for (i1block_pos = 0; i1block_pos < i1block_count;
 		   i1block_pos++)
 		{
-		  if (i1block_buffer[i1block_pos] > 0)
+		  if (i1block_buffer[i1block_pos] >= 0)
 		    {
                       printf("Attempting to access IBLOCK: %i\n",
                              i1block_buffer[i1block_pos]);

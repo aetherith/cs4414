@@ -1,5 +1,5 @@
 Thomas Foulds (tcf9bj):
-  *
+  * Implementation of data block copy, as well as general indirection unwind, first indirection copy, and second indirection copy.  Built other core functionality as needed.  Answered questions 3 and 4 of REPORT.
 Amanda Ray (ajr2fu):
   * Implementation of triple indirection, quality control, wrote Algorithm description/reconstruction portions of REPORT
 Sami Fekadu (sf5fw):

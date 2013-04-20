@@ -1,4 +1,11 @@
-Describe your algorithm for solving this problem.
+# Thomas Foulds (tcf9bj)
+# Amanda Ray    (ajr2fu)
+# Sami Fekadu   (sf5fw)
+# CS4414
+# Assignment 6
+# REPORT
+
+1:  Description of Algorithm
 
 We defined six methods in this program, detailed below. 
 
@@ -16,10 +23,81 @@ unwind_iblock (void *source_ptr, int block_num, int *block_buffer) is the last m
 
 Our solution itself opens the provided data file in read-only mode to prevent corruption or excessive interaction with the file. We then map the file to memory using the mmap() call, and begin our search for inodes that fulfill our criteria. For a found inode, we will copy its filename to a buffer and open it so that we may copy data blocks into it. We iterate through our array of datablocks and use our copy_dblock method to add each block to our newly created file. In the case of indirect blocks, we unwind them to an array of the next-level up (for example, i1blocks to dblocks; i2blocks to i1blocks; i3blocks to i2blocks). We then iterate through that array and repeat - in the case if i1blocks copied to an array of dblocks, those dblocks are copied to the output file; i2blocks copied to i1blocks are then copied to an array of dblocks, etc. This is repeated until each level of indirect block supported has been unwound to its base-level data blocks and copied to the output file. We finish by unmapping the data file from memory to complete our cleanup process.
 
-If the inodes were not included in the data file, could these files still be reconstructed? Why or why not? If the inodes existed somewhere but the uid and gid were not known, could these files still be reconstructed? Why or why not?
+2:  Time Complexity of Algorithm
+
+Running Time is O(N), please read below for explanation.
+
+Given N bites in a an input file,
+
+We have all the if check statments that cost costant time so we don't count them 
+
+then we have a for loop
+    	for (dblock_pos = 0; dblock_pos < N_DBLOCKS; dblock_pos++) 
+			for (dblock_pos = 0; dblock_pos < N_IBLOCKS; dblock_pos++) 
+
+ N_DBLOCKS is 12 and N_IBLOCKS is 3 so we have
+
+12+3 so far still a constant so it does not matter in respect to N.
+
+and then we have loops
+          for (i1block_pos = 0; i1block_pos < i1block_count; i1block_pos++)
+        for (i2block_pos = 0; i2block_pos < i2block_count; i2block_pos++)
+
+for both, worse case scenario, i2block_count can go up to N so we have O(2N) right here
+
+That is it for the loops that are in main but then we have to account for the loops and instructions that are in any function that are being used in main 
+So to account for that:
+
+The find_inode gets called twice:
+   f = find_inode(search_ptr, data_file_map_end, search_uid, search_gid);
+   inode_t *f = find_inode (search_ptr, data_file_map_end, search_uid, search_gid);
+
+and in the method is a while loop
+	  while (search_ptr <= end_ptr - sizeof(int))
+
+So worst case this gives us 2 more Ns and these are not nested either so we have O(4N) so far.
+
+The method check_inode gets called once
+	      if (check_inode (f) == GEN_ERROR)
+and in check_inode, the followong loops apear again
+	for (dblock_pos = 0; dblock_pos < N_DBLOCKS; dblock_pos++) 
+			for (dblock_pos = 0; dblock_pos < N_IBLOCKS; dblock_pos++) 
+so we add 2 more Ns to our running time which makes it O(6N) so far
+
+the method print_inode also calls the above two loops once each so that makes our total so far O(8N)
+
+in Method copy_dblock, we have method
+	  memcpy (copy_buffer, from_ptr + (BLOCK_SIZE * block_num), bytes);
+that could possibly cost N so that make our total 9N
+
+We also have have 2 while loops. One actually has f searching and in there is a check_inode method being called, 
+this just adds another N to the running time. Same with the print_inode, it is called in the while loop.
+
+The unwind method also adds a constant amount of Ns to the total running time so there is not N multiplied by N, just a constant
+multiple and constants do not matter so Running time is O(N)!
+
+3:  Files Found
+* 0.pdf - Seems to be a copy of Prof. Skadron's lecture notes on device drivers and IO devices.  The file is 10 pages in length.
+* 1.gif - GIF heat map of a processor layout showing positions of caches and other processor components
+* 2.tiff - A TIFF image of the Ketchup Dragon.
+* 3.ps - A PostScript file showing another heat map of a processor.  The metadata attached to the file seems to indicate that the file belongs to Prof. Skadron.
+
+4:  Use of Indirection Blocks
+* 0.pdf - Uses both single and double indirection.
+* 1.gif - Only uses single indirection.
+* 2.tiff - Uses both single and double indirection.
+* 3.ps - Only uses single indirection.
+
+5:  inodes Per Disk Block
+
+The inode structure we were provided consists of 25 integer variables, some stand alone, others in the form of arrays.  Our block size is 1024 bytes and given that our integers are 32 bits long, each inode occupies 100 bytes of disk space.  This means that in each disk block there can be up to 10 inodes with 24 bytes of leftover space at the end of the block.
+
+6:  File Reconstruction Under Special Cases
 
 Files could still be partially reconstructed without an inode because all of the data is still contained inside the larger data file. We could search for file signatures and read in and process the data appropriately, but could potentially run into issues with block indirection if all blocks are not accounted for and any of the files use indirect blocks. Without inodes, we would be unable to identify the perpetrator, as we would lack information about the creator/owner of the file. If inodes existed but without the uid/gid file, we would be able to almost-fully reconstruct files - we would be able to handle block indirection easily, as indirect blocks are referenced in the inode struct, but we would still lack identifying information about the file owner and, thus, would similarly be unable to identify the perpetrator.
 
-How much time did you spend on this assignment, was it fun, and how could it be improved?
+7:  Time Commitment and Comments
+
+Thomas - I spent a total of 8 hours on this assignment.  A slightly clearer description as to how we were supposed to start looking for inodes would have been helpful.  Overall a fun assignment because of its practical uses.
 
 Amanda - I spent a total of around 5 hours on this assignment. The backstory and attempts at identifying the perpetrator made it more enjoyable than simple data processing and file extraction.

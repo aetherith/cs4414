@@ -1,6 +1,6 @@
 # Thomas Foulds (tcf9bj)
 # Amanda Ray (ajr2fu)
-# Sami
+# Sami Fekadu (sf5fw)
 # 04/14/13
 # CS4414
 # Makefile for Assignment 6
